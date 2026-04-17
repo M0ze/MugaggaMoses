@@ -9,6 +9,8 @@
 <body>
     <div id="crt-container">
         <div id="terminal-window">
+            <div class="path-indicator">mugagga@portfolio:~$ ls -la /home/index</div>
+            
             <nav class="nav-menu">
                 <a href="index.html" class="nav-link active">HOME</a>
                 <a href="about.html" class="nav-link">ABOUT</a>
@@ -17,29 +19,35 @@
                 <a href="experience.html" class="nav-link">EXPERIENCE</a>
                 <a href="contact.html" class="nav-link">CONTACT</a>
             </nav>
-            <div id="terminal-output">
-                <div class="profile-section mt-4">
-                    <div class="profile-image-container" style="width: 150px; height: 150px;">
-                        <img src="IMG_2310.png" alt="Mugagga Moses" class="profile-image">
+
+            <div class="terminal-main-content">
+                <div id="terminal-output">
+                    <div class="header-content mt-4">
+                        <div class="name-title">
+                            <div class="output-line text-4xl"><strong>MUGAGGA MOSES</strong></div>
+                            <div class="output-line text-xl opacity-80 italic">Full Stack Engineer & Creative Developer</div>
+                        </div>
+                        <div class="profile-avatar-container">
+                            <img src="IMG_2310.png" alt="Mugagga Moses" class="profile-avatar">
+                        </div>
                     </div>
-                    <div>
-                        <div class="output-line text-4xl"><strong>MUGAGGA MOSES</strong></div>
-                        <div class="output-line text-xl opacity-80 italic">Full Stack Engineer & Creative Developer</div>
-                    </div>
-                </div>
-                
-                <div class="output-line mt-8 border-b border-dashed opacity-30"></div>
-                <div class="output-line mt-4">Welcome to my digital terminal.</div>
-                <div class="output-line">I specialize in building performant, visually engaging web systems.</div>
-                <div class="output-line mt-4 text-accent">> Loading system profile...</div>
-                <div class="output-line">> Status: ONLINE</div>
-                <div class="output-line">> Location: Uganda, Earth</div>
-                <div class="output-line mt-8">Use the navigation menu above to explore my work and experience.</div>
-                
-                <div class="output-line mt-12 text-sm opacity-50">
-                    [ SYSTEM HINT ] This is a multi-page portfolio. Every section is now its own dedicated space.
+                    
+                    <div class="output-line mt-8 border-b border-dashed opacity-30"></div>
+                    <div class="output-line mt-4">Welcome to my digital terminal.</div>
+                    <div class="output-line">I specialize in building performant, visually engaging web systems.</div>
+                    <div class="output-line mt-4 text-accent">> Loading system profile...</div>
+                    <div class="output-line">> Status: ONLINE</div>
+                    <div class="output-line">> Location: Uganda, Earth</div>
+                    <div class="output-line mt-8">Use the navigation menu above to explore my work and experience.</div>
                 </div>
             </div>
+
+            <footer class="terminal-status-bar">
+                <span>[ USER: mugagga ]</span>
+                <span>[ SESSION: 1337 ]</span>
+                <span>[ LOC: 127.0.0.1 ]</span>
+                <span>[ STATUS: OK ]</span>
+            </footer>
         </div>
     </div>
 </body>

@@ -49,6 +49,9 @@ body {
     border-radius: 4px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 85vh;
 }
 
 /* Polished CRT Effect */
@@ -65,27 +68,61 @@ body {
     opacity: 0.3;
 }
 
+/* Path Indicator Component */
+.path-indicator {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    margin-bottom: 25px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+}
+
+.path-indicator::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #ff5f56;
+    border-radius: 50%;
+    margin-right: 12px;
+    box-shadow: 0 0 8px #ff5f56;
+}
+
+.terminal-main-content {
+    flex-grow: 1;
+}
+
 .nav-menu {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 0;
     margin-bottom: 40px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 40, 0, 0.1);
 }
 
 .nav-link {
     color: var(--text-color);
     text-decoration: none;
-    padding: 6px 16px;
+    padding: 10px 20px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid transparent;
+    border-right: 1px solid var(--border-color);
 }
 
+.nav-link:last-child { border-right: none; }
+
 .nav-link:hover, .nav-link.active {
-    background: var(--text-color);
-    color: #000;
-    box-shadow: var(--text-glow);
+    background: rgba(0, 255, 157, 0.15);
+    color: var(--accent-color);
+    text-shadow: var(--text-glow);
+}
+
+.nav-link.active {
+    background: rgba(0, 255, 157, 0.1);
+    border-bottom: 2px solid var(--accent-color);
 }
 
 /* Header & Avatar */
@@ -113,6 +150,21 @@ body {
     object-fit: cover;
     border-radius: 50%;
     filter: brightness(1.1) contrast(1.1) grayscale(30%) sepia(10%);
+}
+
+/* Footer Status Bar */
+.terminal-status-bar {
+    margin-top: 40px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 255, 157, 0.1);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--text-color);
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .text-4xl { font-size: 3.8rem; text-shadow: var(--text-glow); line-height: 1; }
@@ -226,4 +278,5 @@ body {
     .header-content { flex-direction: column-reverse; align-items: flex-start; gap: 20px; }
     .text-4xl { font-size: 2.6rem; }
     .profile-avatar-container { margin-left: 0; width: 80px; height: 80px; }
+    .terminal-status-bar { flex-direction: column; gap: 5px; }
 }
