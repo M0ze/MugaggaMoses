@@ -5,8 +5,14 @@
 if (typeof THREE === 'undefined') {
     console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
     // Display an error message to the user on the page if Three.js is missing
-    document.addEventListener('DOMContentLoaded', () => {
-        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Three.js library not found. Please check your internet connection or CDN link.</div>';
+    document.addEventListener('DOMContentLoaded', () => { // Use DOMContentLoaded to ensure body exists
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = 'red';
+        errorDiv.style.textAlign = 'center';
+        errorDiv.style.marginTop = '50px';
+        errorDiv.textContent = 'Error: Three.js library not found. Please check your internet connection or CDN link.';
+        document.body.appendChild(errorDiv);
+        console.error("Three.js library not found.");
     });
     // Prevent further execution if Three.js is missing
     throw new Error("Three.js not loaded.");
@@ -155,18 +161,26 @@ function renderProjects(terminal) {
         });
     });
 
+    // Attempt to create project cubes if Three.js is available and functions exist
     if (terminal.threeScene && terminal.threeScene.createProjectCubes) {
-        terminal.threeScene.createProjectCubes();
-        if (terminal.threeScene.projectCubes && terminal.threeScene.projectCubes.length === projectElements.length) {
-            projectElements.forEach((el, i) => {
-                el.mesh = terminal.threeScene.projectCubes[i].mesh;
-            });
-            terminal.threeScene.commandHandlers.activateCommandElements(projectElements);
-        } else {
-            console.warn("Mismatch in project cube data and Three.js scene data.");
+        try {
+            terminal.threeScene.createProjectCubes();
+            // Ensure projectCubes array is populated and matches expected length
+            if (terminal.threeScene.projectCubes && terminal.threeScene.projectCubes.length === projectElements.length) {
+                projectElements.forEach((el, i) => {
+                    el.mesh = terminal.threeScene.projectCubes[i].mesh;
+                });
+                terminal.threeScene.commandHandlers.activateCommandElements(projectElements);
+            } else {
+                console.warn("Mismatch in project cube data and Three.js scene data.");
+            }
+        } catch (e) {
+            console.error("Error creating project cubes:", e);
+            terminal.log("Error displaying project 3D elements.", "output-error");
         }
     } else {
         console.warn("Three.js scene or createProjectCubes function not available for project cubes.");
+        terminal.log("Note: 3D project elements are not available.", "output-info");
     }
     return content;
 }
@@ -939,7 +953,6 @@ Shell: Bash (simulated)
 
 // --- Main Execution Flow ---
 // Use window.load to ensure all resources (like CDN Three.js, fonts) are loaded.
-// DOMContentLoaded is for the DOM structure only.
 window.addEventListener('load', async () => {
     console.log("Window loaded. Initializing application...");
     const terminalOutput = document.getElementById('terminal-output');
@@ -952,14 +965,16 @@ window.addEventListener('load', async () => {
     // Check for essential DOM elements first
     if (!terminalOutput || !terminalInput || !promptSymbol || !canvas) {
         console.error("Essential DOM elements not found. Please check index.html.");
-        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements (terminal output, input, canvas) are missing. Please check index.html.</div>';
+        // Display a more direct error message if elements are missing
+        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements (terminal output, input, canvas) are missing. Please check index.html for correctness.</div>';
         return; // Stop execution if essential elements are missing
     }
 
     try {
         console.log("Starting Terminal initialization...");
         terminal = new Terminal(terminalOutput, terminalInput, promptSymbol);
-        await terminal.boot();
+        // Use await for boot sequence
+        await terminal.boot(); 
         console.log("Terminal boot complete.");
 
         console.log("Registering commands...");
@@ -967,7 +982,8 @@ window.addEventListener('load', async () => {
         console.log("Commands registered.");
 
         console.log("Setting up Three.js scene...");
-        const threeSceneApi = setupThreeScene(canvas, terminal);
+        // Attempt Three.js setup, but continue if it fails
+        const threeSceneApi = setupThreeScene(canvas, terminal); 
         if (threeSceneApi) {
             terminal.setThreeScene(threeSceneApi);
             console.log("Three.js scene setup successful.");
