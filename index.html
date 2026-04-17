@@ -3,17 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hacker Portfolio</title>
+    <title>Moses Lyn — Developer</title>
+    <!-- Link to external CSS -->
     <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for VT323 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="terminal">
-        <div id="output"></div>
-        <div class="input-line">
-            <span class="prompt">&gt;</span>
-            <input type="text" id="input" autofocus>
+    <div id="crt-container">
+        <div id="terminal-container">
+            <div id="terminal-output">
+                <!-- Terminal output will be injected here by JavaScript -->
+            </div>
+            <div id="terminal-input-line">
+                <span id="prompt-symbol">&gt;</span>
+                <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
+                <span id="cursor">_</span>
+            </div>
         </div>
+        <!-- Canvas for Three.js -->
+        <canvas id="three-canvas"></canvas>
+        <!-- CRT Effects -->
+        <div id="scanlines"></div>
+        <div id="bezel"></div>
     </div>
-    <script src="app.js"></script>
+
+    <!-- Include Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+    <!-- Include the consolidated script -->
+    <script src="script.js"></script>
 </body>
-</html> 
+</html>
