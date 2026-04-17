@@ -1,0 +1,436 @@
+/* General Body Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'VT323', monospace; /* Terminal font */
+    color: #000000; /* Default black text for readability */
+    background-color: #ffffff; /* Default white background for bright mode */
+    overflow: hidden; /* Prevent scrollbars */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-shadow: none; /* Remove neon glow */
+    font-size: 1.2rem; /* Base font size for terminal */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode {
+    color: #00ff00; /* Classic terminal green in dark mode */
+    background-color: #000; /* Black background in dark mode */
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); /* Neon glow for dark mode */
+}
+
+/* CRT Container - For overall screen effects */
+#crt-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 100px rgba(255,255,255,0.3); /* Lighter inner shadow for bright mode */
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+body.dark-mode #crt-container {
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.8); /* Inner shadow for CRT effect in dark mode */
+}
+
+/* Terminal Window */
+#terminal-window {
+    position: relative;
+    width: 90%;
+    max-width: 800px; /* Responsive max-width */
+    height: 80%;
+    max-height: 600px; /* Responsive max-height */
+    border: 2px solid #000000; /* Black border in bright mode */
+    background-color: rgba(240, 240, 240, 0.95); /* Light terminal background */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2); /* Subtle shadow in bright mode */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 15px;
+    box-sizing: border-box;
+    font-size: 1rem; /* Base font size for terminal content */
+    transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark-mode #terminal-window {
+    border-color: #00ff00; /* Green border in dark mode */
+    background-color: rgba(0, 15, 0, 0.9); /* Dark green terminal background */
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3); /* Green glow */
+}
+
+/* Terminal Output Area */
+#terminal-output {
+    flex-grow: 1;
+    overflow-y: auto;
+    white-space: pre-wrap; /* Preserve whitespace and wrap lines */
+    word-break: break-all; /* Break long words if necessary */
+    scrollbar-width: thin;
+    scrollbar-color: #000000 rgba(240, 240, 240, 0.95); /* Black scrollbar thumb on light track */
+}
+
+/* Hide scrollbar for Chrome, Edge, and Safari */
+#terminal-output::-webkit-scrollbar {
+    width: 0.5em;
+}
+
+#terminal-output::-webkit-scrollbar-track {
+    background: rgba(240, 240, 240, 0.95); /* Light track */
+}
+
+#terminal-output::-webkit-scrollbar-thumb {
+    background-color: #000000; /* Black thumb */
+    border-radius: 2px;
+    border: 2px solid rgba(240, 240, 240, 0.95);
+}
+
+body.dark-mode #terminal-output {
+    scrollbar-color: #00ff00 rgba(0, 15, 0, 0.9); /* Green scrollbar on dark track */
+}
+
+body.dark-mode #terminal-output::-webkit-scrollbar-track {
+    background: rgba(0, 15, 0, 0.9); /* Dark track */
+}
+
+body.dark-mode #terminal-output::-webkit-scrollbar-thumb {
+    background-color: #00ff00; /* Green thumb */
+    border: 2px solid rgba(0, 15, 0, 0.9);
+}
+
+/* Prompt Line */
+#terminal-input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+#prompt-symbol {
+    margin-right: 10px;
+    color: #000000; /* Black prompt symbol in bright mode */
+    font-weight: bold;
+}
+
+body.dark-mode #prompt-symbol {
+    color: #00ff00; /* Green prompt symbol in dark mode */
+}
+
+#terminal-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #000000; /* Black input text in bright mode */
+    font-family: 'VT323', monospace; /* Terminal font */
+    font-size: inherit; /* Inherit size from terminal-output */
+    caret-color: #000000; /* Black cursor color */
+    caret-shape: block; /* Use block cursor */
+    animation: blink 1s step-end infinite alternate;
+}
+
+body.dark-mode #terminal-input {
+    color: #00ff00; /* Green input text in dark mode */
+    caret-color: #00ff00; /* Green cursor in dark mode */
+}
+
+/* Cursor Animation */
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+/* CRT Scanlines */
+#scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 50%,
+        rgba(0, 0, 0, 0.08) 50%, /* Darker scanlines on light background */
+        rgba(0, 0, 0, 0.08) 100%
+    );
+    background-size: 100% 4px; /* Adjust for scanline thickness and spacing */
+    pointer-events: none; /* Allow interaction with elements behind */
+    opacity: 0.4;
+    z-index: 10; /* Ensure scanlines are on top */
+    transition: background 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+body.dark-mode #scanlines {
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 50%,
+        rgba(0, 255, 0, 0.08) 50%, /* Green scanlines on dark background */
+        rgba(0, 255, 0, 0.08) 100%
+    );
+    opacity: 0.6;
+}
+
+/* CRT Bezel */
+#bezel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 30px solid rgba(255, 255, 255, 0.9); /* White bezel in bright mode */
+    box-shadow: inset 0 0 50px rgba(255,255,255,0.4);
+    pointer-events: none;
+    z-index: 15; /* Bezel on top of scanlines */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body.dark-mode #bezel {
+    border: 30px solid rgba(0, 0, 0, 0.9); /* Black bezel in dark mode */
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+}
+
+/* Canvas for Three.js (if used later, currently not) */
+#three-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Behind terminal */
+    pointer-events: none; /* Allow terminal to receive clicks */
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    #terminal-window {
+        width: 95%;
+        height: 70%;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+    #prompt-symbol {
+        margin-right: 5px;
+    }
+    #terminal-input {
+        font-size: inherit;
+    }
+    #bezel {
+        border-width: 15px; /* Thinner bezel on mobile */
+    }
+    body.bright-mode #bezel {
+        border-width: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #terminal-window {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        font-size: 0.8rem;
+    }
+    #bezel {
+        display: none; /* Remove bezel on very small screens */
+    }
+    body.bright-mode #bezel {
+        display: none;
+    }
+    #scanlines {
+        opacity: 0.4;
+    }
+    body.dark-mode #scanlines {
+        opacity: 0.6; /* Revert to default dark mode opacity */
+    }
+    body.bright-mode #scanlines {
+        opacity: 0.3; /* Lighter scanlines for bright mode */
+    }
+}
+
+/* Specific content styling */
+.output-line {
+    margin-bottom: 0.5em;
+    line-height: 1.4; /* Improve readability */
+    text-rendering: optimizeLegibility; /* Better text rendering */
+    font-feature-settings: "kern" 1; /* Kerning for better spacing */
+}
+
+.output-command {
+    color: #0077cc; /* Blue for commands in bright mode */
+    font-weight: bold;
+}
+
+.output-error {
+    color: #cc0000; /* Red for errors */
+    font-weight: bold;
+}
+
+.output-info {
+    color: #996600; /* Brown/Orange for info */
+}
+
+.output-highlight {
+    color: #0077cc; /* Blue for highlights */
+}
+
+.output-link {
+    color: #0077cc;
+    text-decoration: none;
+    cursor: pointer;
+    border-bottom: 1px dashed #0077cc;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.output-link:hover {
+    color: #000000;
+    border-bottom: 1px solid #000000;
+}
+
+body.dark-mode .output-command { color: #00ffff; } /* Cyan for commands in dark mode */
+body.dark-mode .output-highlight { color: #00ffdd; } /* Teal for highlights in dark mode */
+body.dark-mode .output-link { color: #00ffff; border-bottom-color: #00ffff; }
+body.dark-mode .output-link:hover { color: #ffffff; border-bottom-color: #ffffff; }
+
+
+/* Styles for specific content sections */
+#about-content,
+#skills-content,
+#projects-content,
+#contact-content,
+#whoami-content,
+#experience-content,
+#readme-content {
+    margin-top: 1em;
+}
+
+.skill-bar-container {
+    width: 100%;
+    background-color: rgba(200, 200, 200, 0.7); /* Light grey background for bar container */
+    border: 1px solid rgba(0, 0, 0, 0.3); /* Dark border */
+    margin-top: 5px;
+    height: 15px;
+    position: relative;
+    border-radius: 3px;
+}
+
+body.dark-mode .skill-bar-container {
+    background-color: rgba(0, 50, 0, 0.7); /* Dark green background in dark mode */
+    border-color: rgba(0, 255, 0, 0.3); /* Green border in dark mode */
+}
+
+.skill-bar {
+    height: 100%;
+    background-color: #0000ff; /* Blue skill bar in bright mode */
+    box-shadow: 0 0 10px rgba(0, 0, 255, 0.7);
+    transition: width 0.5s ease-out;
+    border-radius: 3px;
+}
+
+body.dark-mode .skill-bar {
+    background-color: #00ff00; /* Green skill bar in dark mode */
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+}
+
+.skill-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* Project cards */
+.project-card {
+    border: 1px solid rgba(0, 0, 0, 0.3); /* Dark border */
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    background-color: rgba(230, 230, 230, 0.95); /* Light background */
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+body.dark-mode .project-card {
+    border-color: rgba(0, 255, 0, 0.3); /* Green border in dark mode */
+    background-color: rgba(0, 10, 0, 0.7); /* Dark green background in dark mode */
+}
+
+.project-card h3 {
+    margin-top: 0;
+    color: #0000cc; /* Dark blue title in bright mode */
+    font-weight: bold;
+}
+
+body.dark-mode .project-card h3 {
+    color: #00ffff; /* Cyan title in dark mode */
+}
+
+.project-card p {
+    font-size: 0.9em;
+    color: #333333; /* Dark grey description */
+}
+
+body.dark-mode .project-card p {
+    color: #cccccc; /* Lighter grey description in dark mode */
+}
+
+.project-card a {
+    color: #0000cc;
+    text-decoration: none;
+    border-bottom: 1px dashed #0000cc;
+}
+
+.project-card a:hover {
+    color: #000000;
+    border-bottom: 1px solid #000000;
+}
+
+body.dark-mode .project-card a {
+    color: #00ffff;
+    border-bottom: 1px dashed #00ffff;
+}
+
+body.dark-mode .project-card a:hover {
+    color: #ffffff;
+    border-bottom: 1px solid #ffffff;
+}
+
+
+/* Matrix Rain */
+.matrix-code {
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    color: #00ff00; /* Green matrix text */
+    opacity: 0.7;
+    position: absolute;
+    user-select: none;
+}
+
+/* Glitch Effect (for post-processing) */
+.glitch {
+  animation: glitch 1s infinite linear alternate-reverse;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  10% { transform: translate(-5px, 5px); }
+  20% { transform: translate(5px, -5px); }
+  30% { transform: translate(-5px, 5px); }
+  40% { transform: translate(5px, -5px); }
+  50% { transform: translate(-5px, 5px); }
+  60% { transform: translate(5px, -5px); }
+  70% { transform: translate(-5px, 5px); }
+  80% { transform: translate(5px, -5px); }
+  90% { transform: translate(-5px, 5px); }
+  100% { transform: translate(0); }
+}
+
+/* Blinking Cursor animation */
+#terminal-input[disabled] {
+    animation: none; /* Stop blinking when disabled */
+}
+
+/* Input field focus styles */
+#terminal-input:focus {
+    outline: none;
+}
