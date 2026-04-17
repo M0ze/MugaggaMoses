@@ -1,16 +1,322 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mugagga Moses — Developer Portfolio</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Mugagga Moses - Developer Portfolio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base Styles & Dark Mode (Default) */
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #00ff9d; /* Green accent */
+            --accent-color: #39ff14; /* Brighter green */
+            --link-color: #39ff14;
+            --prompt-color: #00ff9d;
+            --input-text-color: #00ff9d;
+            --cursor-color: #00ff9d;
+            --secondary-text-color: #cccccc;
+            --border-color: #00ff9d;
+            --shadow-color: rgba(0, 255, 157, 0.3);
+            --scanline-color: rgba(0, 255, 157, 0.08);
+            --bezel-border: 30px solid rgba(0,0,0,0.9);
+            --bezel-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+            --project-card-bg: rgba(0, 10, 0, 0.7);
+            --project-card-border: 1px solid rgba(0, 255, 0, 0.3);
+            --skill-bar-bg: rgba(0, 50, 0, 0.7);
+            --skill-bar-border: 1px solid rgba(0, 255, 0, 0.3);
+            --skill-bar-color: #00ff00;
+            --skill-bar-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+        }
+
+        /* Bright Mode */
+        body.bright-mode {
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a; /* Dark grey/black */
+            --accent-color: #0077cc; /* Modern blue accent */
+            --link-color: #0077cc;
+            --prompt-color: #000000;
+            --input-text-color: #000000;
+            --cursor-color: #000000;
+            --secondary-text-color: #333333;
+            --border-color: #000000;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --scanline-color: rgba(0, 0, 0, 0.08);
+            --bezel-border: 30px solid rgba(255,255,255,0.9);
+            --bezel-shadow: inset 0 0 50px rgba(255,255,255,0.4);
+            --project-card-bg: rgba(230, 230, 230, 0.95);
+            --project-card-border: 1px solid rgba(0, 0, 0, 0.3);
+            --skill-bar-bg: rgba(200, 200, 200, 0.7);
+            --skill-bar-border: 1px solid rgba(0, 0, 0, 0.3);
+            --skill-bar-color: #0000ff; /* Blue skill bar */
+            --skill-bar-shadow: 0 0 10px rgba(0, 0, 255, 0.7);
+        }
+
+        /* General Body & Terminal Styling */
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #crt-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: var(--bezel-shadow);
+            border: var(--bezel-border);
+            transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease;
+        }
+
+        #terminal-window {
+            position: relative;
+            width: 95%; /* Slightly wider for content */
+            max-width: 1000px; /* Increased max-width */
+            height: 90%;
+            max-height: 700px; /* Increased max-height */
+            border: 2px solid var(--border-color);
+            background-color: rgba(0, 15, 0, 0.9); /* Default terminal background */
+            box-shadow: 0 0 20px var(--shadow-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px; /* Increased padding */
+            box-sizing: border-box;
+            font-size: 1.1rem; /* Slightly larger base font */
+            transition: border-color 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+            text-rendering: optimizeLegibility;
+            font-feature-settings: "kern" 1;
+        }
+        body.bright-mode #terminal-window {
+            border-color: #000000;
+            background-color: rgba(240, 240, 240, 0.95);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #terminal-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word; /* Break long words */
+            scrollbar-width: thin;
+            scrollbar-color: var(--prompt-color) rgba(0, 15, 0, 0.9);
+        }
+        #terminal-output::-webkit-scrollbar { width: 0.5em; }
+        #terminal-output::-webkit-scrollbar-track { background: rgba(0, 15, 0, 0.9); }
+        #terminal-output::-webkit-scrollbar-thumb { background-color: var(--prompt-color); border-radius: 4px; border: 2px solid rgba(0, 15, 0, 0.9); }
+
+        body.bright-mode #terminal-output { scrollbar-color: #000 rgba(240, 240, 240, 0.95); }
+        body.dark-mode #terminal-output::-webkit-scrollbar-track { background: rgba(0, 15, 0, 0.9); }
+        body.dark-mode #terminal-output::-webkit-scrollbar-thumb { background-color: #00ff00; border-color: rgba(0, 15, 0, 0.9); }
+        body.bright-mode #terminal-output::-webkit-scrollbar-track { background: rgba(240, 240, 240, 0.95); }
+        body.bright-mode #terminal-output::-webkit-scrollbar-thumb { background-color: #000000; border-color: rgba(240, 240, 240, 0.95); }
+
+
+        #terminal-input-line { display: flex; align-items: center; margin-top: 10px; }
+        #prompt-symbol { margin-right: 10px; color: var(--prompt-color); font-weight: bold; }
+        #terminal-input {
+            flex-grow: 1; background: transparent; border: none; outline: none;
+            color: var(--input-text-color); font-family: 'VT323', monospace; font-size: inherit;
+            caret-color: var(--cursor-color); caret-shape: block;
+            animation: blink 1s step-end infinite alternate;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        #scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(to bottom, transparent, transparent 50%, var(--scanline-color) 50%, var(--scanline-color) 100%);
+            background-size: 100% 4px; pointer-events: none; opacity: 0.6; z-index: 10;
+            transition: background 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        body.bright-mode #scanlines { background: repeating-linear-gradient(to bottom, transparent, transparent 50%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.08) 100%); opacity: 0.4; }
+
+        #bezel {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: 30px solid rgba(255, 255, 255, 0.9); /* White bezel in bright mode */
+            box-shadow: inset 0 0 50px rgba(255,255,255,0.4);
+            pointer-events: none; z-index: 15;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark-mode #bezel {
+            border: 30px solid rgba(0, 0, 0, 0.9); /* Black bezel in dark mode */
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.7);
+        }
+
+        /* Sections & Content */
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 150px); /* Adjust based on header/footer height */
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            visibility: hidden; /* Initially hidden */
+        }
+        main.visible {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        .section {
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 80px; /* Spacing between sections */
+            text-align: left; /* Content should be left-aligned */
+        }
+        .section h1, .section h2 {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 1em;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 5px var(--shadow-color);
+        }
+        body.bright-mode .section h1, body.bright-mode .section h2 {
+             color: var(--accent-color); /* Blue accent for headings in bright mode */
+             text-shadow: none;
+        }
+
+        .output-line { margin-bottom: 0.6em; line-height: 1.5; }
+        .output-command { color: var(--link-color); font-weight: bold; }
+        .output-error { color: #ff0000; font-weight: bold; }
+        .output-info { color: #996600; } /* Brown/Orange for info */
+        .output-highlight { color: var(--accent-color); }
+        .output-link {
+            color: var(--link-color); text-decoration: none; cursor: pointer;
+            border-bottom: 1px dashed var(--link-color);
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .output-link:hover { color: var(--text-color); border-bottom: 1px solid var(--text-color); }
+        body.dark-mode .output-link { border-bottom-color: #00ffff; color: #00ffff; }
+        body.dark-mode .output-link:hover { color: #ffffff; border-bottom-color: #ffffff; }
+
+        .skill-bar-container {
+            width: 100%; background-color: var(--skill-bar-bg); border: 1px solid var(--skill-bar-border);
+            margin-top: 5px; height: 15px; position: relative; border-radius: 3px;
+        }
+        .skill-bar {
+            height: 100%; background-color: var(--skill-bar-color); box-shadow: 0 0 10px rgba(var(--skill-bar-shadow-color-rgb), 0.7);
+            transition: width 0.5s ease-out; border-radius: 3px;
+        }
+        .skill-label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+        .project-card {
+            border: var(--project-card-border); background-color: var(--project-card-bg);
+            padding: 15px; margin-bottom: 15px; border-radius: 5px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .project-card h3 { margin-top: 0; color: var(--accent-color); font-weight: bold; }
+        .project-card p { font-size: 0.9em; color: var(--secondary-text-color); }
+        .project-card a { color: var(--link-color); text-decoration: none; border-bottom: 1px dashed var(--link-color); }
+        .project-card a:hover { color: var(--text-color); border-bottom: 1px solid var(--text-color); }
+
+        /* Experience Timeline */
+        .timeline { position: relative; }
+        .timeline::before { /* Vertical line */
+            content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+            width: 2px; background-color: var(--border-color); margin-left: -1px;
+        }
+        .timeline-item { position: relative; padding-bottom: 40px; }
+        .timeline-item::after { /* Dot on line */
+            content: ''; position: absolute; left: 50%; top: 15px; /* Align with text top */
+            width: 12px; height: 12px; margin-left: -6px; /* Center the dot */
+            background-color: var(--accent-color); border-radius: 50%;
+            border: 2px solid var(--text-color);
+        }
+        .timeline-content { width: calc(50% - 30px); /* Adjust for padding/margin */ }
+        .timeline-item:nth-child(odd) .timeline-content { left: 0; padding-right: 30px; }
+        .timeline-item:nth-child(even) .timeline-content { left: calc(50% + 30px); padding-left: 30px; } /* Adjust for padding/margin */
+        .timeline-item:nth-child(even)::after { left: 50%; } /* Ensure dot is centered */
+
+        body.bright-mode .timeline::before { background-color: #999999; }
+        body.bright-mode .timeline-item::after { background-color: #0077cc; border-color: #000000; }
+        body.bright-mode .timeline-content { color: #333333; } /* Darker text for content in bright mode */
+
+        /* Contact Form */
+        .contact-form input, .contact-form textarea {
+            background-color: rgba(0, 15, 0, 0.8);
+            color: #00ff00;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-family: 'VT323', monospace;
+            font-size: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        body.dark-mode .contact-form input, body.dark-mode .contact-form textarea {
+            background-color: rgba(0, 15, 0, 0.8);
+            color: #00ff00;
+            border-color: rgba(0, 255, 0, 0.3);
+        }
+        body.bright-mode .contact-form input, body.bright-mode .contact-form textarea {
+            background-color: rgba(230, 230, 230, 0.95);
+            color: #000000;
+            border-color: rgba(0, 0, 0, 0.3);
+        }
+        .contact-form button {
+            background-color: var(--accent-color);
+            color: #000000; /* Black text on button */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'VT323', monospace;
+            font-size: inherit;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .contact-form button:hover {
+            background-color: #39ff14; /* Lighter green on hover */
+            transform: translateY(-2px);
+        }
+        body.dark-mode .contact-form button { color: #000000; } /* Black text on button in dark mode */
+        body.dark-mode .contact-form button:hover { background-color: #00ff9d; } /* Lighter green on hover */
+        body.bright-mode .contact-form button { background-color: #0077cc; color: #ffffff; } /* Blue button in bright mode */
+        body.bright-mode .contact-form button:hover { background-color: #005fa3; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: var(--secondary-text-color);
+            margin-top: 40px;
+        }
+        body.bright-mode footer { color: #666666; }
+
+        /* Cursor */
+        #cursor {
+            animation: blink 1s step-end infinite alternate;
+            color: var(--cursor-color);
+        }
+        body.bright-mode #cursor { color: #000000; }
+    </style>
+    <style>
+        /* Tailwind CSS via CDN - Minimal setup needed as we're mostly using custom CSS */
+        /* Add any specific Tailwind classes directly in HTML if needed */
+        .font-vt323 { font-family: 'VT323', monospace; }
+        .font-roboto-mono { font-family: 'Roboto Mono', monospace; }
+    </style>
 </head>
-<body>
+<body class="dark-mode"> <!-- Default to dark mode -->
     <div id="crt-container" class="dark-mode">
         <div id="terminal-window">
             <div id="terminal-output">
@@ -26,8 +332,679 @@
         <div id="bezel"></div>
     </div>
 
-    <script src="js/content.js"></script>
-    <script src="js/terminal.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Main script for terminal and content logic -->
+    <script>
+        // --- Core Application Logic (Vanilla JS) ---
+
+        // --- Content Data ---
+        const developerName = "Mugagga Moses";
+        const developerLocation = "Uganda";
+        const developerShortName = "Moses";
+
+        const aboutContent = `
+Hi, I'm ${developerShortName} Lyn— a creative developer from ${developerLocation} obsessed with making the web feel alive.
+I build terminal-style portfolios and work on web experiences. When I'm not coding, I'm exploring new technologies.
+`;
+
+        const skillsData = {
+            languages: [
+                { name: "JavaScript", level: 95, icon: "💻" },
+                { name: "TypeScript", level: 90, icon: "🔷" },
+                { name: "Python", level: 80, icon: "🐍" },
+                { name: "HTML", level: 98, icon: "📄" },
+                { name: "CSS", level: 95, icon: "🎨" },
+            ],
+            frameworks: [
+                { name: "React", level: 85, icon: "⚛️" },
+                { name: "Node.js", level: 80, icon: "💡" },
+                { name: "Express.js", level: 75, icon: "🚀" },
+                { name: "Tailwind CSS", level: 95, icon: "💨" },
+            ],
+            tools: [
+                { name: "Git", level: 90, icon: "🐙" },
+                { name: "Docker", level: 70, icon: "🐳" },
+                { name: "VS Code", level: 90, icon: "💻" },
+                { name: "Vim", level: 99, icon: "✍️" },
+            ],
+            concepts: [
+                { name: "Performance Optimization", level: 90, icon: "⚡" },
+                { name: "Responsive Design", level: 95, icon: "📱" },
+                { name: "API Design", level: 80, icon: "🔗" },
+                { name: "Problem Solving", level: 98, icon: "🧠" },
+            ]
+        };
+
+        const projectsData = [
+            { title: "Terminal Portfolio", description: "This very site! A retro-futuristic developer portfolio.", tech: ["HTML", "CSS", "Vanilla JS"], link: "#", github: "#" },
+            { title: "Gemini CLI Experiments", description: "AI-powered command-line tools.", tech: ["Node.js", "Python", "AI"], link: "#", github: "#" },
+            { title: "3D Portfolio Engine", description: "Reusable Three.js template for 3D portfolio experiences.", tech: ["Three.js", "JavaScript", "GLSL"], link: "#", github: "#" },
+            { title: "Personal Blog", description: "A space for sharing thoughts and tutorials.", tech: ["Markdown", "Static Site"], link: "#", github: "#" },
+            { title: "Open Source Contributions", description: "Contributing to various impactful open-source projects.", tech: ["Various"], link: "#", github: "#" }
+        ];
+
+        const experienceData = [
+            { title: "Senior Software Engineer", company: "Tech Innovations Inc.", duration: "2023 - Present", description: "Leading development of advanced web applications." },
+            { title: "Full-Stack Developer", company: "Creative Solutions Ltd.", duration: "2021 - 2023", description: "Built and maintained scalable client-facing platforms." },
+            { title: "Junior Developer", company: "Startup Hub", duration: "2020 - 2021", description: "Gained foundational experience in web development." },
+            { title: "Computer Science Student", company: "University of Uganda", duration: "2016 - 2020", description: "Studied core computer science principles." },
+        ];
+
+        const contactLinks = [
+            { name: "GitHub", url: "https://github.com/M0ze", icon: "🐙" },
+            { name: "X (Twitter)", url: "https://x.com/MozesMugagga", icon: "❌" },
+            { name: "LinkedIn", url: "#", icon: "👔" },
+            { name: "Twitch", url: "#", icon: "▶️" }
+        ];
+
+        // --- DOM Elements ---
+        const terminalOutput = document.getElementById('terminal-output');
+        const terminalInput = document.getElementById('terminal-input');
+        const promptSymbol = document.getElementById('prompt-symbol');
+        const crtContainer = document.getElementById('crt-container'); // For theme switching
+
+        // --- Terminal Core Logic (Simplified) ---
+        class Terminal {
+            constructor(outputEl, inputEl, promptEl) {
+                this.outputElement = outputEl;
+                this.inputElement = inputEl;
+                this.promptSymbol = promptEl;
+                this.commands = {}; // Command registry
+                this.commandHistory = [];
+                this.commandHistoryIndex = -1;
+                this.currentSection = 'home'; // Track current displayed section
+                this.isThemeDark = true; // Default to dark mode
+
+                this.inputElement.addEventListener('keydown', this.handleKeyDown.bind(this));
+                this.inputElement.addEventListener('input', this.handleInput.bind(this));
+                
+                this.cursorInterval = null;
+                this.isCursorVisible = true;
+            }
+
+            init() {
+                console.log("Initializing Terminal...");
+                this.outputElement.innerHTML = ''; // Clear any previous content
+                this.logLine('Welcome to Mugagga Moses' Portfolio!');
+                this.log("Type 'help' for available commands.");
+                this.setTheme(this.isThemeDark ? 'dark-mode' : 'bright-mode'); // Ensure initial theme is set
+                this.startCursorBlinking();
+                this.inputElement.disabled = false;
+                this.focusInput();
+                console.log("Terminal initialized.");
+
+                // Display initial content
+                this.displaySection('home');
+            }
+
+            logLine(message, type = 'output-line') {
+                console.log(`Logging: "${message}" with type: ${type}`);
+                const line = document.createElement('div');
+                line.className = type;
+                line.textContent = message; // Use textContent for safety
+                this.outputElement.appendChild(line);
+                this.scrollToBottom();
+                return line;
+            }
+
+            // Simplified typing for initial messages or confirmations if needed
+            async typeString(text, delay = 20) {
+                console.log(`Typing: "${text}"`);
+                this.isTyping = true;
+                this.inputElement.disabled = true;
+
+                for (let i = 0; i < text.length; i++) {
+                    if (!this.outputElement.lastChild) {
+                        this.log("", 'output-line');
+                    }
+                    this.outputElement.lastChild.textContent += text[i];
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+
+                this.isTyping = false;
+                this.inputElement.disabled = false;
+                this.focusInput();
+                this.scrollToBottom();
+            }
+
+            handleKeyDown(event) {
+                switch (event.key) {
+                    case 'Enter':
+                        event.preventDefault();
+                        this.executeCommand();
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        this.navigateHistory(event.key === 'ArrowUp' ? -1 : 1);
+                        break;
+                    case 'Tab':
+                        event.preventDefault();
+                        this.handleTabCompletion();
+                        break;
+                }
+            }
+
+            handleInput() {
+                this.currentLine = this.inputElement.value;
+                this.updateCursor();
+            }
+
+            executeCommand() {
+                const commandLine = this.inputElement.value.trim();
+                if (commandLine) {
+                    this.log(`> ${commandLine}`, 'output-command');
+                    this.commandHistory.push(commandLine);
+                    this.commandHistoryIndex = this.commandHistory.length;
+                    this.inputElement.value = '';
+                    this.currentLine = '';
+                    this.updateCursor();
+
+                    const [command, ...args] = commandLine.split(' ');
+                    const handler = this.commands[command];
+
+                    if (handler) {
+                        try {
+                            console.log(`Executing command: ${command}`);
+                            handler(this, args); // Pass terminal instance and args
+                        } catch (error) {
+                            console.error(`Error executing command "${command}":`, error);
+                            this.log(`Error: ${error.message}`, 'output-error');
+                        }
+                    } else {
+                        this.log(`Command not found: ${command}. Type 'help' for assistance.`, 'output-error');
+                    }
+                } else {
+                    this.inputElement.value = '';
+                    this.currentLine = '';
+                    this.updateCursor();
+                    this.log(""); // Add a blank line
+                }
+                this.focusInput();
+            }
+
+            navigateHistory(direction) {
+                if (this.commandHistory.length === 0) return;
+                this.commandHistoryIndex += direction;
+                if (this.commandHistoryIndex < 0) this.commandHistoryIndex = 0;
+                else if (this.commandHistoryIndex >= this.commandHistory.length) {
+                    this.commandHistoryIndex = this.commandHistory.length - 1;
+                     if (direction === 1) { // Moving down past the end clears input
+                         this.inputElement.value = ''; this.currentLine = ''; this.updateCursor(); return;
+                    }
+                }
+                this.inputElement.value = this.commandHistory[this.commandHistoryIndex];
+                this.currentLine = this.inputElement.value;
+                this.inputElement.setSelectionRange(this.currentLine.length, this.currentLine.length);
+                this.updateCursor();
+            }
+
+            handleTabCompletion() {
+                const currentInput = this.inputElement.value.toLowerCase();
+                const availableCommands = Object.keys(this.commands);
+                const matches = availableCommands.filter(cmd => cmd.startsWith(currentInput));
+
+                if (matches.length === 1) {
+                    this.inputElement.value = matches[0];
+                    this.currentLine = matches[0];
+                } else if (matches.length > 1) {
+                    this.log(matches.join('  '), 'output-info');
+                }
+                this.updateCursor();
+            }
+
+            startCursorBlinking() {
+                console.log("Starting cursor blinking");
+                if (this.cursorInterval) clearInterval(this.cursorInterval);
+                this.cursorInterval = setInterval(() => {
+                    this.isCursorVisible = !this.isCursorVisible;
+                    this.updateCursor();
+                }, CURSOR_BLINK_RATE);
+            }
+
+            stopCursorBlinking() {
+                console.log("Stopping cursor blinking");
+                if (this.cursorInterval) clearInterval(this.cursorInterval);
+                this.isCursorVisible = true;
+                this.updateCursor();
+            }
+
+            updateCursor() {
+                const cursorElement = document.getElementById('cursor');
+                if (!cursorElement) return;
+                if (this.inputElement.disabled) {
+                    cursorElement.style.visibility = 'hidden';
+                } else {
+                    cursorElement.style.visibility = this.isCursorVisible ? 'visible' : 'hidden';
+                }
+            }
+
+            focusInput() {
+                console.log("Focusing input");
+                this.inputElement.focus();
+                this.inputElement.disabled = false;
+                this.startCursorBlinking();
+            }
+
+            blurInput() {
+                console.log("Blurring input");
+                this.inputElement.blur();
+                this.stopCursorBlinking();
+            }
+
+            scrollToBottom() {
+                this.outputElement.scrollTop = this.outputElement.scrollHeight;
+            }
+
+            // Display content for a specific section
+            displaySection(sectionId) {
+                console.log(`Displaying section: ${sectionId}`);
+                this.outputElement.innerHTML = ''; // Clear previous content
+                let sectionContent = '';
+
+                switch(sectionId) {
+                    case 'home':
+                    case 'welcome':
+                        this.currentSection = 'home';
+                        sectionContent = `
+                            <div class="output-line"><strong>Mugagga Moses</strong></div>
+                            <div class="output-line font-roboto-mono" style="font-weight: 300;">Full Stack Engineer | Vim Enthusiast | Building performant systems</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Welcome to my digital command line.</div>
+                            <div class="output-line">Type 'help' to see available commands.</div>
+                        `;
+                        break;
+                    case 'about':
+                        this.currentSection = 'about';
+                        sectionContent = `
+                            <div class="output-line"><strong>About Mugagga Moses</strong></div>
+                            <div class="output-line"></div>
+                            <div class="output-line">${aboutContent}</div>
+                            <div class="output-line"></div>
+                            <div class="output-line"><strong>Skills:</strong></div>
+                            ${this.renderSkillsSection()}
+                        `;
+                        break;
+                    case 'projects':
+                        this.currentSection = 'projects';
+                        sectionContent = `
+                            <div class="output-line"><strong>Projects:</strong></div>
+                            <div class="output-line"></div>
+                            ${this.renderProjectsSection()}
+                        `;
+                        break;
+                    case 'experience':
+                        this.currentSection = 'experience';
+                        sectionContent = `
+                            <div class="output-line"><strong>Experience:</strong></div>
+                            <div class="output-line"></div>
+                            ${this.renderExperienceSection()}
+                        `;
+                        break;
+                    case 'contact':
+                        this.currentSection = 'contact';
+                        sectionContent = `
+                            <div class="output-line"><strong>Contact:</strong></div>
+                            <div class="output-line"></div>
+                            ${this.renderContactSection()}
+                        `;
+                        break;
+                    case 'blog':
+                        this.currentSection = 'blog';
+                        sectionContent = `
+                            <div class="output-line"><strong>Blog:</strong></div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Latest posts coming soon...</div>
+                        `;
+                        break;
+                    case 'whoami':
+                        this.currentSection = 'whoami';
+                        sectionContent = renderWhoami();
+                        break;
+                    case 'help':
+                        sectionContent = renderHelp();
+                        break;
+                    default:
+                        this.log(`Section '${sectionId}' not found. Type 'help' for available commands.`, 'output-error');
+                        return;
+                }
+                // Append content directly
+                this.outputElement.innerHTML += sectionContent; // Append new content
+                this.scrollToBottom();
+            }
+
+            // Rendering helper functions (moved from content.js for single file)
+            renderSkillsSection() {
+                let skillsHtml = '<div id="skills-content">';
+                Object.keys(skillsData).forEach(category => {
+                    skillsHtml += `<div class="output-line font-roboto-mono" style="font-weight: bold;">${category.charAt(0).toUpperCase() + category.slice(1)}:</div>`;
+                    skillsData[category].forEach(skill => {
+                        skillsHtml += `
+                            <div class="output-line">
+                                <span class="skill-label">${skill.name}</span>
+                                <div class="skill-bar-container">
+                                    <div class="skill-bar" style="width: ${skill.level}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+                skillsHtml += '</div>';
+                return skillsHtml;
+            }
+            
+            renderProjectsSection() {
+                let projectsHtml = '<div id="projects-content">';
+                projectsData.forEach((project, index) => {
+                    projectsHtml += `
+                        <div class="project-card">
+                            <h3 class="font-roboto-mono">${project.title}</h3>
+                            <p>${project.description}</p>
+                            <div class="mt-2">
+                                ${project.tech.map(t => `<span class="bg-gray-700 text-gray-200 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300 mr-2">${t}</span>`).join(' ')}
+                            </div>
+                            <div class="mt-3 flex space-x-4">
+                                <a href="${project.link}" target="_blank" class="output-link">Live Demo</a>
+                                <a href="${project.github}" target="_blank" class="output-link">GitHub</a>
+                            </div>
+                        </div>
+                    `;
+                });
+                projectsHtml += '</div>';
+                return projectsHtml;
+            }
+
+            renderExperienceSection() {
+                 let experienceHtml = '<div id="experience-content" class="timeline">';
+                 experienceData.forEach((exp, index) => {
+                     const isOdd = index % 2 === 0; // Tailwind's odd/even classes might not apply directly here, manual check.
+                     experienceHtml += `
+                        <div class="timeline-item">
+                            <div class="timeline-content ${isOdd ? '' : ''}">
+                                <div class="output-line"><strong>${exp.title}</strong> - ${exp.company}</div>
+                                <div class="output-line output-highlight">${exp.duration}</div>
+                                <div class="output-line">${exp.description}</div>
+                            </div>
+                        </div>
+                     `;
+                 });
+                 experienceHtml += '</div>';
+                 return experienceHtml;
+            }
+
+            renderContactSection() {
+                let contactHtml = '<div id="contact-content">';
+                contactHtml += `
+                    <p class="mb-4">Feel free to reach out!</p>
+                    <form id="contact-form" class="contact-form">
+                        <input type="text" placeholder="Name" name="name" required><br>
+                        <input type="email" placeholder="Email" name="email" required><br>
+                        <textarea placeholder="Message" name="message" rows="4" required></textarea><br>
+                        <button type="submit">Send Message</button>
+                    </form>
+                    <div class="mt-4">
+                        <p>Or connect via social media:</p>
+                        <div class="flex justify-center space-x-4 mt-2">
+                `;
+                contactLinks.forEach(link => {
+                    contactHtml += `<a href="${link.url}" target="_blank" class="output-link">${link.name} (${link.icon})</a>`;
+                });
+                contactHtml += `
+                        </div>
+                    </div>
+                `;
+                contactHtml += '</div>';
+                return contactHtml;
+            }
+
+
+            setTheme(themeClass) {
+                console.log(`Setting theme: ${themeClass}`);
+                document.body.className = themeClass; // Apply theme class to body
+                if (crtContainer) crtContainer.className = themeClass; // Apply to container for effects
+                
+                const isDark = themeClass === 'dark-mode';
+                
+                // Update prompt symbol and cursor color
+                if (this.promptSymbol) this.promptSymbol.style.color = isDark ? '#00ff00' : '#000000';
+                if (this.inputElement) this.inputElement.style.caretColor = isDark ? '#00ff00' : '#000000';
+                
+                // Update prompt symbol text if needed (e.g., different prompts for modes)
+                this.promptSymbol.textContent = isDark ? '>' : '>'; 
+
+                this.isThemeDark = isDark;
+                console.log(`Theme set to: ${isDark ? 'Dark' : 'Bright'}`);
+            }
+
+            // Handle command execution
+            registerCommands() {
+                console.log("Registering commands...");
+                this.commands = {
+                    help: () => {
+                        const helpContent = document.createElement('div');
+                        helpContent.innerHTML = '<div class="output-line"><strong>Available Commands:</strong></div>';
+                        Object.keys(this.commands).sort().forEach(cmd => {
+                            helpContent.innerHTML += `<div class="output-line output-command"><strong>${cmd}</strong></div>`;
+                        });
+                        this.outputElement.appendChild(helpContent);
+                        this.scrollToBottom();
+                    },
+                    clear: () => {
+                        console.log("Executing clear command");
+                        this.outputElement.innerHTML = '';
+                    },
+                    home: () => this.displaySection('home'),
+                    welcome: () => this.displaySection('home'),
+                    about: () => this.displaySection('about'),
+                    projects: () => this.displaySection('projects'),
+                    skills: () => {
+                        console.log("Executing skills command");
+                        const skillsHtml = this.renderSkillsSection(); // Use the direct rendering function
+                        this.outputElement.innerHTML += skillsHtml; // Append to output
+                        this.scrollToBottom();
+                    },
+                    experience: () => {
+                        console.log("Executing experience command");
+                        const expContent = this.renderExperienceSection();
+                        this.outputElement.innerHTML += expContent;
+                        this.scrollToBottom();
+                    },
+                    contact: () => {
+                        console.log("Executing contact command");
+                        const contactHtml = this.renderContactSection();
+                        this.outputElement.innerHTML += contactHtml;
+                        this.scrollToBottom();
+                        // Add form submission handler here if needed, otherwise it's just display
+                        document.getElementById('contact-form')?.addEventListener('submit', (e) => {
+                            e.preventDefault();
+                            this.log("Fake submission successful! (Form is not actually sending data)", 'output-info');
+                        });
+                    },
+                    whoami: () => {
+                        console.log("Executing whoami command");
+                        this.displaySection('whoami');
+                    },
+                    blog: () => this.displaySection('blog'),
+                    theme: (term, args) => {
+                        const themeName = args[0] || (this.isThemeDark ? 'light' : 'dark');
+                        const newTheme = themeName === 'light' ? 'bright-mode' : 'dark-mode';
+                        this.setTheme(newTheme);
+                        term.log(`Theme set to: ${newTheme === 'bright-mode' ? 'Bright' : 'Dark'}`);
+                    },
+                    light: (term) => this.setTheme('bright-mode'),
+                    dark: (term) => this.setTheme('dark-mode'),
+                    // Add more commands as needed
+                };
+                
+                // Register commands with terminal instance
+                Object.keys(this.commands).forEach(cmdName => {
+                    terminal.registerCommand(cmdName, this.commands[cmdName]);
+                });
+
+                // Add aliases
+                terminal.registerCommand('?', terminal.commands.help);
+                terminal.registerCommand('ls', terminal.commands.projects);
+                terminal.registerCommand('man', terminal.commands.help);
+                terminal.registerCommand('home', terminal.commands.home);
+                terminal.registerCommand('welcome', terminal.commands.welcome);
+                console.log("Commands registered.");
+            }
+
+            // Initial theme setting based on body class
+            setTheme(themeClass) {
+                console.log(`Setting theme: ${themeClass}`);
+                document.body.className = themeClass; // Apply theme class to body
+                if (crtContainer) crtContainer.className = themeClass; // Also apply to container for bezel/scanlines
+                
+                const isDark = themeClass === 'dark-mode';
+                
+                // Update prompt symbol and cursor color
+                if (this.promptSymbol) this.promptSymbol.style.color = isDark ? '#00ff00' : '#000000';
+                if (this.inputElement) this.inputElement.style.caretColor = isDark ? '#00ff00' : '#000000';
+                
+                // Update prompt symbol text if needed
+                this.promptSymbol.textContent = isDark ? '>' : '>'; 
+
+                this.isThemeDark = isDark;
+                console.log(`Theme set to: ${isDark ? 'Dark' : 'Bright'}`);
+            }
+            
+            // --- Section Navigation ---
+            displaySection(sectionId) {
+                console.log(`Displaying section: ${sectionId}`);
+                this.outputElement.innerHTML = ''; // Clear previous content
+                let sectionContentElement = null;
+
+                switch(sectionId) {
+                    case 'home':
+                    case 'welcome':
+                        this.currentSection = 'home';
+                        sectionContentElement = document.createElement('div');
+                        sectionContentElement.innerHTML = `
+                            <div class="output-line"><span class="font-vt323 text-4xl font-bold text-accent">${developerName}</span></div>
+                            <div class="output-line font-roboto-mono" style="font-weight: 300; font-size: 0.9em;">Full Stack Engineer | Vim Enthusiast | Building performant systems</div>
+                            <div class="output-line"></div>
+                            <div class="output-line">Welcome to my digital command line.</div>
+                            <div class="output-line">Type 'help' for available commands.</div>
+                        `;
+                        break;
+                    case 'about':
+                        this.currentSection = 'about';
+                        sectionContentElement = renderAbout(); // Use existing render function
+                        break;
+                    case 'projects':
+                        this.currentSection = 'projects';
+                        sectionContentElement = renderProjects(this); // Pass terminal instance if needed
+                        break;
+                    case 'skills':
+                        this.currentSection = 'skills';
+                        sectionContentElement = renderSkills();
+                        break;
+                    case 'experience':
+                        this.currentSection = 'experience';
+                        sectionContentElement = renderExperience();
+                        break;
+                    case 'contact':
+                        this.currentSection = 'contact';
+                        sectionContentElement = renderContact(this);
+                        break;
+                    case 'blog':
+                        this.currentSection = 'blog';
+                        sectionContentElement = document.createElement('div');
+                        sectionContentElement.innerHTML = `<div class="output-line"><strong>Blog:</strong></div><div class="output-line"></div><div class="output-line">Latest posts coming soon...</div>`;
+                        break;
+                    case 'whoami':
+                        this.currentSection = 'whoami';
+                        sectionContentElement = renderWhoami();
+                        break;
+                    case 'help':
+                        sectionContentElement = renderHelp();
+                        break;
+                    default:
+                        this.log(`Section '${sectionId}' not found. Type 'help' for available commands.`, 'output-error');
+                        return;
+                }
+
+                if (sectionContentElement) {
+                    this.outputElement.appendChild(sectionContentElement);
+                    this.scrollToBottom();
+                }
+            }
+        }
+
+        // --- Initialization ---
+        // Use window.load to ensure all resources (like CDN, fonts) are loaded.
+        window.addEventListener('load', () => {
+            console.log("Window loaded. Initializing application...");
+            
+            // Get DOM elements
+            const terminalOutput = document.getElementById('terminal-output');
+            const terminalInput = document.getElementById('terminal-input');
+            const promptSymbol = document.getElementById('prompt-symbol');
+            const crtContainer = document.getElementById('crt-container');
+            // Canvas is no longer strictly necessary for basic functionality
+            // const canvas = document.getElementById('three-canvas'); 
+
+            let terminal;
+
+            // Check for essential DOM elements
+            if (!terminalOutput || !terminalInput || !promptSymbol || !crtContainer) {
+                console.error("Essential DOM elements (terminal output, input, prompt, crt-container) not found. Please check index.html.");
+                document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements are missing. Please check index.html for correctness.</div>';
+                return;
+            }
+
+            try {
+                console.log("Starting Terminal initialization...");
+                terminal = new Terminal(terminalOutput, terminalInput, promptSymbol);
+                terminal.init(); // Initialize terminal and boot sequence
+                console.log("Terminal initialization complete.");
+
+                // Register commands
+                console.log("Registering commands...");
+                registerCommands(terminal); // Pass terminal instance to register commands
+                console.log("Commands registered.");
+
+                // Theme toggle logic
+                const applyTheme = (isDark) => {
+                    document.body.classList.toggle('dark-mode', isDark);
+                    if (crtContainer) crtContainer.className = isDark ? 'dark-mode' : ''; // Apply class directly
+                    if (promptSymbol) promptSymbol.style.color = isDark ? '#00ff00' : '#000000';
+                    if (terminalInput) terminalInput.style.caretColor = isDark ? '#00ff00' : '#000000';
+                    promptSymbol.textContent = isDark ? '>' : '>';
+                    terminal.isThemeDark = isDark;
+                    console.log(`Theme set to: ${isDark ? 'Dark' : 'Bright'}`);
+                };
+                
+                // Initial theme setting based on crtContainer class (from HTML)
+                terminal.isThemeDark = crtContainer.classList.contains('dark-mode');
+                applyTheme(terminal.isThemeDark);
+
+                // Command for theme toggle
+                terminal.commands.theme = (term, args) => {
+                    const themeName = args[0] === 'light' ? 'light' : (args[0] === 'dark' ? 'dark' : (term.isThemeDark ? 'light' : 'dark'));
+                    const isDark = themeName === 'dark-mode';
+                    applyTheme(isDark);
+                    term.log(`Theme set to: ${isDark ? 'Dark' : 'Bright'}`);
+                };
+                terminal.registerCommand('theme', terminal.commands.theme);
+                terminal.registerCommand('light', (term) => terminal.commands.theme(term, ['light']));
+                terminal.registerCommand('dark', (term) => terminal.commands.theme(term, ['dark']));
+
+                document.body.classList.add('loaded');
+                terminal.focusInput();
+                console.log("Application initialized successfully.");
+            } catch (error) {
+                console.error("Error during application initialization:", error);
+                if(terminalOutput) {
+                     terminalOutput.innerHTML = `<div class="output-error">Initialization failed: ${error.message}. Check console for details.</div>`;
+                } else {
+                    document.body.innerHTML = `<div style="color: red; text-align: center; margin-top: 50px;">Error: Critical initialization failed: ${error.message}. Check console for details.</div>`;
+                }
+                if(terminalInput) {
+                    terminalInput.disabled = true;
+                }
+            }
+        });
+    </script>
 </body>
 </html>
