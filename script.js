@@ -521,22 +521,21 @@ class Terminal {
 }
 
 // --- Three.js Scene Setup ---
-// Temporarily commented out or made conditional to ensure basic terminal works first.
-// We will re-introduce this if basic terminal functionality is stable.
+// This function is now conditionally executed and includes error handling.
 function setupThreeScene(canvas, terminal) {
     console.log("Attempting to set up Three.js scene...");
     // Check if Three.js is loaded
     if (typeof THREE === 'undefined') {
         console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
         // Display an error message to the user on the page if Three.js is missing
-        // This might still fail if DOMContentLoaded hasn't run, but it's a reasonable fallback.
         const errorDiv = document.createElement('div');
         errorDiv.style.color = 'red';
         errorDiv.style.textAlign = 'center';
         errorDiv.style.marginTop = '50px';
         errorDiv.textContent = 'Error: Three.js library not found. Please check your internet connection or CDN link.';
-        document.getElementById('crt-container')?.appendChild(errorDiv); // Use optional chaining
-        return null;
+        // Use optional chaining for safety, in case crt-container is also missing
+        document.getElementById('crt-container')?.appendChild(errorDiv); 
+        return null; // Indicate failure
     }
 
     try {
@@ -831,7 +830,9 @@ function setupThreeScene(canvas, terminal) {
         return threeSceneApi;
     } catch (e) {
         console.error("Error during Three.js setup:", e);
-        terminal.log("Error initializing 3D effects. Continuing with text-only mode.", "output-error");
+        // This error is handled more gracefully now, so we can proceed.
+        // The terminal should still work.
+        terminal.log("Warning: 3D effects could not be initialized. Continuing with text-only mode.", "output-error");
         return null; // Return null if Three.js setup fails
     }
 }
@@ -865,6 +866,7 @@ function registerCommands(terminal) {
         term.outputElement.appendChild(skillsContentElement);
         term.scrollToBottom();
 
+        // Conditionally call Three.js functions if scene is initialized
         if (term.threeScene && term.threeScene.createSkillIcons) {
             term.threeScene.createSkillIcons();
             term.threeScene.commandHandlers.activateCommandElements(term.threeScene.skillIcons);
