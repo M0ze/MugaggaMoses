@@ -23,6 +23,7 @@ const TYPE_SPEED = 20; // Milliseconds per character
 const BOOT_DELAY = 50; // Milliseconds between boot sequence steps
 const CURSOR_BLINK_RATE = 500; // Milliseconds for cursor blink
 
+// Three.js related constants - these might be used if Three.js is enabled
 const PARTICLE_COUNT = 1000;
 const PROJECT_CUBE_COUNT = 5; // Number of project cubes to display
 const SKILL_ICON_COUNT = 5;
@@ -137,7 +138,7 @@ function renderSkills() {
         `;
     });
     return content;
-}
+    }
 
 function renderProjects(terminal) {
     const content = document.createElement('div');
@@ -522,12 +523,12 @@ class Terminal {
 
 // --- Three.js Scene Setup ---
 // This function is now conditionally executed and includes error handling.
+// It will be called only if the canvas element is found.
 function setupThreeScene(canvas, terminal) {
     console.log("Attempting to set up Three.js scene...");
-    // Check if Three.js is loaded
+    // Check if Three.js is loaded globally
     if (typeof THREE === 'undefined') {
         console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
-        // Display an error message to the user on the page if Three.js is missing
         const errorDiv = document.createElement('div');
         errorDiv.style.color = 'red';
         errorDiv.style.textAlign = 'center';
@@ -830,9 +831,7 @@ function setupThreeScene(canvas, terminal) {
         return threeSceneApi;
     } catch (e) {
         console.error("Error during Three.js setup:", e);
-        // This error is handled more gracefully now, so we can proceed.
-        // The terminal should still work.
-        terminal.log("Warning: 3D effects could not be initialized. Continuing with text-only mode.", "output-error");
+        terminal.log("Error initializing 3D effects. Continuing with text-only mode.", "output-error");
         return null; // Return null if Three.js setup fails
     }
 }
