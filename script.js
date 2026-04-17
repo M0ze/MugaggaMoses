@@ -1,9 +1,16 @@
 // script.js - Consolidated JavaScript for Terminal Portfolio
 
-// --- Three.js CDN ---
-// This script will be included directly in index.html via CDN.
-// For this consolidated file, we assume THREE is available globally.
-// If running locally without CDN, you'd need to include Three.js loader scripts.
+// --- Global Checks ---
+// Ensure THREE is available from CDN. This check happens early.
+if (typeof THREE === 'undefined') {
+    console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
+    // Display an error message to the user on the page if Three.js is missing
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Three.js library not found. Please check your internet connection or CDN link.</div>';
+    });
+    // Prevent further execution if Three.js is missing
+    throw new Error("Three.js not loaded.");
+}
 
 // --- Constants ---
 const TYPE_SPEED = 20; // Milliseconds per character
@@ -51,7 +58,7 @@ function disposeThreeObject(obj) {
 // --- Content Data (from README) ---
 const developerName = "Mugagga Moses";
 const developerLocation = "Uganda";
-const developerShortName = "Moses"; // As per override
+const developerShortName = "Moses";
 
 const aboutContent = `
 Hi, I'm ${developerShortName} Lyn— a creative developer from ${developerLocation} obsessed with making the web feel alive.
@@ -148,17 +155,18 @@ function renderProjects(terminal) {
         });
     });
 
-    // Trigger Three.js to create cubes if available
     if (terminal.threeScene && terminal.threeScene.createProjectCubes) {
-        terminal.threeScene.createProjectCubes(); // This populates terminal.threeScene.projectCubes
-        if (terminal.threeScene.projectCubes.length === projectElements.length) {
+        terminal.threeScene.createProjectCubes();
+        if (terminal.threeScene.projectCubes && terminal.threeScene.projectCubes.length === projectElements.length) {
             projectElements.forEach((el, i) => {
                 el.mesh = terminal.threeScene.projectCubes[i].mesh;
             });
             terminal.threeScene.commandHandlers.activateCommandElements(projectElements);
+        } else {
+            console.warn("Mismatch in project cube data and Three.js scene data.");
         }
     } else {
-        console.warn("Three.js scene not available for project cubes.");
+        console.warn("Three.js scene or createProjectCubes function not available for project cubes.");
     }
     return content;
 }
@@ -265,6 +273,7 @@ class Terminal {
         this.currentLine = '';
         this.threeScene = null; // To hold the Three.js scene API
 
+        // Add event listeners
         this.inputElement.addEventListener('keydown', this.handleKeyDown.bind(this));
         this.inputElement.addEventListener('input', this.handleInput.bind(this));
 
@@ -273,6 +282,9 @@ class Terminal {
     }
 
     async boot() {
+        console.log("Terminal booting...");
+        this.outputElement.innerHTML = ''; // Clear previous content
+        
         this.log("Initializing system...");
         await this.typeString("Initializing system...", BOOT_DELAY);
         this.log("Verifying hardware...");
@@ -282,31 +294,42 @@ class Terminal {
         this.log("Mounting file system...");
         await this.typeString("Mounting file system...", BOOT_DELAY);
 
-        this.outputElement.innerHTML += '<div class="output-line">Boot Progress: [==========] 100%</div>';
+        // Simulate a boot progress bar
+        const progressDiv = document.createElement('div');
+        progressDiv.className = 'output-line';
+        progressDiv.innerHTML = 'Boot Progress: [<span class="progress-bar-fill">[==========]</span>] 100%';
+        this.outputElement.appendChild(progressDiv);
         await new Promise(resolve => setTimeout(resolve, 300));
 
         this.log("System online. Type 'help' for a list of commands.");
         await this.typeString("System online. Type 'help' for a list of commands.", BOOT_DELAY * 2);
+        
         this.isBooting = false;
         this.startCursorBlinking();
         this.inputElement.disabled = false;
         this.focusInput();
+        console.log("Terminal boot sequence complete.");
     }
 
     log(message, type = 'output-line') {
+        console.log(`Logging: "${message}" with type: ${type}`);
         const line = document.createElement('div');
         line.className = type;
-        line.textContent = message;
+        line.textContent = message; // Use textContent to prevent HTML injection
         this.outputElement.appendChild(line);
         this.scrollToBottom();
         return line;
     }
 
     async typeString(text, delay = TYPE_SPEED) {
+        console.log(`Typing: "${text}"`);
         this.isTyping = true;
         this.inputElement.disabled = true;
 
         for (let i = 0; i < text.length; i++) {
+            if (!this.outputElement.lastChild) { // Ensure there's a line to type on
+                this.log("", 'output-line');
+            }
             this.outputElement.lastChild.textContent += text[i];
             await new Promise(resolve => setTimeout(resolve, delay));
         }
@@ -341,9 +364,7 @@ class Terminal {
                 this.handleTabCompletion();
                 break;
             case 'Backspace':
-                if (this.inputElement.value === '') {
-                    event.preventDefault();
-                }
+                // Allow backspace to work naturally
                 break;
         }
     }
@@ -370,8 +391,10 @@ class Terminal {
 
             if (handler) {
                 try {
+                    console.log(`Executing command: ${command} with args:`, args);
                     handler(this, args);
                 } catch (error) {
+                    console.error(`Error executing command "${command}":`, error);
                     this.log(`Error executing command: ${error.message}`, 'output-error');
                     if (this.threeScene && this.threeScene.postProcessing && this.threeScene.postProcessing.glitch) {
                         this.threeScene.postProcessing.glitch.activate();
@@ -387,12 +410,13 @@ class Terminal {
             this.inputElement.value = '';
             this.currentLine = '';
             this.updateCursor();
-            this.log("");
+            this.log(""); // Add a blank line to maintain spacing if needed
         }
         this.focusInput();
     }
 
     navigateHistory(direction) {
+        console.log("Navigating history", direction);
         if (this.commandHistory.length === 0) return;
 
         this.commandHistoryIndex += direction;
@@ -400,8 +424,8 @@ class Terminal {
         if (this.commandHistoryIndex < 0) {
             this.commandHistoryIndex = 0;
         } else if (this.commandHistoryIndex >= this.commandHistory.length) {
-            this.commandHistoryIndex = this.commandHistory.length -1;
-            if (direction === 1) {
+            this.commandHistoryIndex = this.commandHistory.length - 1; // Stay on last item
+             if (direction === 1) { // If moving down past the end
                  this.inputElement.value = '';
                  this.currentLine = '';
                  this.updateCursor();
@@ -411,7 +435,7 @@ class Terminal {
 
         this.inputElement.value = this.commandHistory[this.commandHistoryIndex];
         this.currentLine = this.inputElement.value;
-        this.inputElement.setSelectionRange(this.currentLine.length, this.currentLine.length);
+        this.inputElement.setSelectionRange(this.currentLine.length, this.currentLine.length); // Move cursor to end
         this.updateCursor();
     }
 
@@ -430,6 +454,7 @@ class Terminal {
     }
 
     startCursorBlinking() {
+        console.log("Starting cursor blinking");
         if (this.cursorInterval) clearInterval(this.cursorInterval);
         this.cursorInterval = setInterval(() => {
             this.isCursorVisible = !this.isCursorVisible;
@@ -438,6 +463,7 @@ class Terminal {
     }
 
     stopCursorBlinking() {
+        console.log("Stopping cursor blinking");
         if (this.cursorInterval) clearInterval(this.cursorInterval);
         this.isCursorVisible = true;
         this.updateCursor();
@@ -445,7 +471,10 @@ class Terminal {
 
     updateCursor() {
         const cursorElement = document.getElementById('cursor');
-        if (!cursorElement) return;
+        if (!cursorElement) {
+            console.warn("Cursor element not found.");
+            return;
+        }
 
         if (this.inputElement.disabled) {
             cursorElement.style.visibility = 'hidden';
@@ -455,12 +484,14 @@ class Terminal {
     }
 
     focusInput() {
+        console.log("Focusing input");
         this.inputElement.focus();
         this.inputElement.disabled = false;
         this.startCursorBlinking();
     }
 
     blurInput() {
+        console.log("Blurring input");
         this.inputElement.blur();
         this.stopCursorBlinking();
     }
@@ -471,15 +502,21 @@ class Terminal {
 
     setThreeScene(scene) {
         this.threeScene = scene;
+        console.log("Three.js scene set on terminal instance.");
     }
 }
 
 // --- Three.js Scene Setup ---
-// This function will be called from main execution flow
 function setupThreeScene(canvas, terminal) {
-    // Ensure THREE is available globally (from CDN)
+    console.log("Setting up Three.js scene...");
     if (typeof THREE === 'undefined') {
-        console.error("Three.js is not loaded. Please include it via CDN.");
+        console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = 'red';
+        errorDiv.style.textAlign = 'center';
+        errorDiv.style.marginTop = '50px';
+        errorDiv.textContent = 'Error: Three.js library not found. Please check your internet connection or CDN link.';
+        document.getElementById('crt-container').appendChild(errorDiv);
         return null;
     }
 
@@ -489,7 +526,7 @@ function setupThreeScene(canvas, terminal) {
 
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x000000, 0); // Transparent background
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -500,26 +537,34 @@ function setupThreeScene(canvas, terminal) {
     camera.position.z = 5;
 
     // Post-processing
-    const composer = new THREE.EffectComposer(renderer);
-    const renderPass = new THREE.RenderPass(scene, camera);
-    composer.addPass(renderPass);
+    let composer, bloomPass, glitchPass;
+    try {
+        console.log("Initializing EffectComposer...");
+        composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
 
-    const bloomPass = new THREE.BloomPass(1, 25, 4, 256);
-    bloomPass.threshold = 0.1;
-    bloomPass.strength = 1.5;
-    bloomPass.radius = 0.5;
-    composer.addPass(bloomPass);
+        bloomPass = new THREE.BloomPass(1, 25, 4, 256);
+        bloomPass.threshold = 0.1;
+        bloomPass.strength = 1.5;
+        bloomPass.radius = 0.5;
+        composer.addPass(bloomPass);
 
-    const glitchPass = new THREE.GlitchPass();
-    glitchPass.goWild = false;
-    composer.addPass(glitchPass);
-
+        glitchPass = new THREE.GlitchPass();
+        glitchPass.goWild = false;
+        composer.addPass(glitchPass);
+        console.log("Post-processing initialized successfully.");
+    } catch (e) {
+        console.error("Failed to initialize post-processing effects:", e);
+        composer = null; // Ensure composer is null if it fails
+    }
     const postProcessing = { composer, bloom: bloomPass, glitch: glitchPass };
 
     // Particle Field
+    console.log("Creating particle field...");
     const particlesGeometry = new THREE.BufferGeometry();
     const particlesMaterial = new THREE.PointsMaterial({
-        color: 0x00ff00,
+        color: 0x00ff00, // Green
         size: 0.05,
         transparent: true,
         opacity: 0.7,
@@ -540,6 +585,7 @@ function setupThreeScene(canvas, terminal) {
         mesh: particles, geometry: particlesGeometry, material: particlesMaterial,
         positions: positions, velocities: new Float32Array(PARTICLE_COUNT * 3).fill(0)
     };
+    console.log("Particle field created.");
 
     // Matrix Rain
     const matrixChars = [];
@@ -552,6 +598,7 @@ function setupThreeScene(canvas, terminal) {
     document.getElementById('crt-container').appendChild(matrixContainer);
 
     function activateMatrixRain() {
+        console.log("Activating Matrix Rain");
         matrixContainer.style.display = 'block';
         for (let i = 0; i < MATRIX_MAX_CHARS; i++) {
             const charElement = document.createElement('span');
@@ -565,6 +612,7 @@ function setupThreeScene(canvas, terminal) {
     }
 
     function deactivateMatrixRain() {
+        console.log("Deactivating Matrix Rain");
         matrixContainer.style.display = 'none';
         matrixChars.forEach(charData => {
             if (charData.element.parentNode) charData.element.parentNode.removeChild(charData.element);
@@ -578,7 +626,7 @@ function setupThreeScene(canvas, terminal) {
 
         matrixChars.forEach(charData => {
             charData.y += charData.speed;
-            if (charData.y > containerHeight + 20) { // Reset if off screen
+            if (charData.y > containerHeight + 20) {
                 charData.y = -20;
                 charData.x = Math.random() * containerWidth;
                 charData.element.innerText = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
@@ -600,6 +648,7 @@ function setupThreeScene(canvas, terminal) {
     let activeCommandElements = null;
 
     function createProjectCubes() {
+        console.log("Creating project cubes...");
         const projectsData = [
             { title: "Terminal Portfolio", link: "#", description: "This site!" },
             { title: "Gemini CLI Experiments", link: "#", description: "AI-powered tools." },
@@ -619,9 +668,11 @@ function setupThreeScene(canvas, terminal) {
             scene.add(mesh);
             projectCubes.push({ mesh, ...projectsData[i] });
         }
+        console.log("Project cubes created.");
     }
 
     function createSkillIcons() {
+        console.log("Creating skill icons...");
         const skillData = [
             { name: "JS" }, { name: "TS" }, { name: "Three.js" }, { name: "React" }, { name: "Tailwind" }
         ];
@@ -638,10 +689,12 @@ function setupThreeScene(canvas, terminal) {
             scene.add(mesh);
             skillIcons.push({ mesh, ...skillData[i] });
         }
+        console.log("Skill icons created.");
     }
 
     const commandHandlers = {
         activateCommandElements: (elements) => {
+            console.log("Activating command elements in scene");
             if (activeCommandElements) {
                 activeCommandElements.forEach(obj => scene.remove(obj.mesh));
             }
@@ -649,6 +702,7 @@ function setupThreeScene(canvas, terminal) {
             elements.forEach(obj => scene.add(obj.mesh));
         },
         clearCommandElements: () => {
+            console.log("Clearing command elements from scene");
             if (activeCommandElements) {
                 activeCommandElements.forEach(obj => disposeThreeObject(obj.mesh));
                 activeCommandElements = null;
@@ -711,16 +765,23 @@ function setupThreeScene(canvas, terminal) {
             });
         }
 
-        composer.render();
+        if (composer) { // Only render if composer was successfully initialized
+            composer.render();
+        } else {
+            renderer.render(scene, camera); // Fallback render without post-processing
+        }
     };
 
     const resizeCanvas = () => {
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
+        console.log(`Resizing canvas to: ${width}x${height}`);
         renderer.setSize(width, height);
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        composer.setSize(width, height);
+        if (composer) {
+            composer.setSize(width, height);
+        }
     };
 
     // Public API for Terminal
@@ -730,9 +791,13 @@ function setupThreeScene(canvas, terminal) {
         createProjectCubes, createSkillIcons, activateMatrixRain, deactivateMatrixRain,
         resizeCanvas,
         dispose: () => {
-            disposeThreeObject(scene); renderer.dispose(); composer.dispose();
-            bloomPass.dispose(); glitchPass.dispose();
+            console.log("Disposing Three.js objects...");
+            disposeThreeObject(scene); renderer.dispose();
+            if (composer) composer.dispose();
+            if (bloomPass) bloomPass.dispose();
+            if (glitchPass) glitchPass.dispose();
             if (matrixContainer.parentNode) matrixContainer.parentNode.removeChild(matrixContainer);
+            console.log("Three.js disposed.");
         }
     };
 
@@ -744,12 +809,15 @@ function setupThreeScene(canvas, terminal) {
 
 // --- Command Implementation ---
 function registerCommands(terminal) {
+    console.log("Registering commands...");
     commands.help = (term, args) => {
+        console.log("Executing help command");
         const helpContent = renderHelp();
         term.outputElement.appendChild(helpContent);
         term.scrollToBottom();
     };
     commands.clear = (term, args) => {
+        console.log("Executing clear command");
         term.outputElement.innerHTML = '';
         if (term.threeScene) {
             term.threeScene.deactivateMatrixRain();
@@ -757,11 +825,13 @@ function registerCommands(terminal) {
         }
     };
     commands.about = (term, args) => {
+        console.log("Executing about command");
         const aboutContentElement = renderAbout();
         term.outputElement.appendChild(aboutContentElement);
         term.scrollToBottom();
     };
     commands.skills = (term, args) => {
+        console.log("Executing skills command");
         const skillsContentElement = renderSkills();
         term.outputElement.appendChild(skillsContentElement);
         term.scrollToBottom();
@@ -772,26 +842,31 @@ function registerCommands(terminal) {
         }
     };
     commands.projects = (term, args) => {
+        console.log("Executing projects command");
         const projectsContentElement = renderProjects(term);
         term.outputElement.appendChild(projectsContentElement);
         term.scrollToBottom();
     };
     commands.experience = (term, args) => {
+        console.log("Executing experience command");
         const experienceContentElement = renderExperience();
         term.outputElement.appendChild(experienceContentElement);
         term.scrollToBottom();
     };
     commands.contact = (term, args) => {
+        console.log("Executing contact command");
         const contactContentElement = renderContact(term);
         term.outputElement.appendChild(contactContentElement);
         term.scrollToBottom();
     };
     commands.whoami = (term, args) => {
+        console.log("Executing whoami command");
         const whoamiContentElement = renderWhoami();
         term.outputElement.appendChild(whoamiContentElement);
         term.scrollToBottom();
     };
     commands.matrix = (term, args) => {
+        console.log("Executing matrix command");
         if (term.threeScene && term.threeScene.activateMatrixRain) {
             term.threeScene.activateMatrixRain();
             term.log("Matrix mode activated. Type 'exit' or 'clear' to deactivate.");
@@ -800,6 +875,7 @@ function registerCommands(terminal) {
         }
     };
     commands.exit = (term, args) => {
+        console.log("Executing exit command");
         if (term.threeScene && term.threeScene.deactivateMatrixRain) {
             term.threeScene.deactivateMatrixRain();
             term.log("Matrix mode deactivated.");
@@ -808,6 +884,7 @@ function registerCommands(terminal) {
         }
     };
     commands['theme glitch'] = (term, args) => {
+        console.log("Executing theme glitch command");
         if (term.threeScene && term.threeScene.postProcessing && term.threeScene.postProcessing.glitch) {
             term.threeScene.postProcessing.glitch.goWild = !term.threeScene.postProcessing.glitch.goWild;
             const status = term.threeScene.postProcessing.glitch.goWild ? "activated" : "deactivated";
@@ -817,6 +894,7 @@ function registerCommands(terminal) {
         }
     };
     commands['cat README.md'] = (term, args) => {
+        console.log("Executing cat README.md command");
         const readmeContentElement = renderReadme();
         term.outputElement.appendChild(readmeContentElement);
         term.scrollToBottom();
@@ -824,11 +902,13 @@ function registerCommands(terminal) {
 
     // Easter Eggs
     commands['sudo make me a sandwich'] = (term, args) => {
+        console.log("Executing sudo make me a sandwich command");
         term.log("...Okay, here you go:", 'output-info');
         term.log("🥪", 'output-highlight');
     };
 
     commands.neofetch = (term, args) => {
+        console.log("Executing neofetch command");
         term.log(`
  _,-'
 ---
@@ -844,6 +924,7 @@ Shell: Bash (simulated)
 
     // Register commands
     Object.keys(commands).forEach(commandName => {
+        console.log(`Registering command: ${commandName}`);
         terminal.registerCommand(commandName, commands[commandName]);
     });
 
@@ -851,12 +932,16 @@ Shell: Bash (simulated)
     terminal.registerCommand('?', commands.help);
     terminal.registerCommand('ls', commands.projects);
     terminal.registerCommand('man', commands.help);
-    terminal.registerCommand('pwd', (term, args) => term.log('/home/user'));
-    terminal.registerCommand('date', (term, args) => term.log(new Date().toLocaleString()));
+    terminal.registerCommand('pwd', (term, args) => { console.log("Executing pwd command"); term.log('/home/user'); });
+    terminal.registerCommand('date', (term, args) => { console.log("Executing date command"); term.log(new Date().toLocaleString()); });
+    console.log("Commands registered.");
 }
 
 // --- Main Execution Flow ---
-document.addEventListener('DOMContentLoaded', () => {
+// Use window.load to ensure all resources (like CDN Three.js, fonts) are loaded.
+// DOMContentLoaded is for the DOM structure only.
+window.addEventListener('load', async () => {
+    console.log("Window loaded. Initializing application...");
     const terminalOutput = document.getElementById('terminal-output');
     const terminalInput = document.getElementById('terminal-input');
     const promptSymbol = document.getElementById('prompt-symbol');
@@ -864,41 +949,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let terminal;
 
-    async function initializeApp() {
+    // Check for essential DOM elements first
+    if (!terminalOutput || !terminalInput || !promptSymbol || !canvas) {
+        console.error("Essential DOM elements not found. Please check index.html.");
+        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements (terminal output, input, canvas) are missing. Please check index.html.</div>';
+        return; // Stop execution if essential elements are missing
+    }
+
+    try {
+        console.log("Starting Terminal initialization...");
         terminal = new Terminal(terminalOutput, terminalInput, promptSymbol);
         await terminal.boot();
+        console.log("Terminal boot complete.");
 
-        // Register commands after terminal is ready
+        console.log("Registering commands...");
         registerCommands(terminal);
+        console.log("Commands registered.");
 
-        // Setup Three.js scene
-        if (canvas) {
-            const threeSceneApi = setupThreeScene(canvas, terminal);
+        console.log("Setting up Three.js scene...");
+        const threeSceneApi = setupThreeScene(canvas, terminal);
+        if (threeSceneApi) {
             terminal.setThreeScene(threeSceneApi);
+            console.log("Three.js scene setup successful.");
         } else {
-            console.warn("Canvas element not found. Three.js scene will not be initialized.");
+            console.warn("Three.js scene setup failed. 3D effects might be disabled.");
+            // Optionally display a message to the user that 3D effects are disabled.
+            terminal.log("Warning: 3D effects could not be initialized.", "output-info");
         }
 
         document.body.classList.add('loaded');
         terminal.focusInput();
+        console.log("Application initialized successfully.");
+    } catch (error) {
+        console.error("Error during application initialization:", error);
+        // Display a user-friendly error message if initialization fails
+        if(terminalOutput) { // Ensure terminalOutput exists before trying to modify it
+             terminalOutput.innerHTML = `<div class="output-error">Initialization failed: ${error.message}. Check console for details.</div>`;
+        } else {
+            document.body.innerHTML = `<div style="color: red; text-align: center; margin-top: 50px;">Error: Critical initialization failed: ${error.message}. Check console for details.</div>`;
+        }
+        // Disable input if initialization fails critically
+        if(terminalInput) {
+            terminalInput.disabled = true;
+        }
     }
-
-    window.addEventListener('load', initializeApp);
-
-    window.addEventListener('resize', () => {
-        if (terminal && terminal.threeScene) {
-            terminal.threeScene.resizeCanvas();
-        }
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (!terminalInput.matches(':focus') && event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-            terminal.focusInput();
-            terminalInput.value += event.key;
-            event.preventDefault();
-        } else if (event.key === 'Tab') {
-            event.preventDefault();
-            terminal.handleTabCompletion();
-        }
-    });
 });
