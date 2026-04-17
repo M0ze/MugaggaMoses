@@ -131,7 +131,7 @@ function renderSkills() {
             <div class="output-line">
                 <span class="skill-label">${skill.name}</span>
                 <div class="skill-bar-container">
-                    <div class="skill-bar" style="width: ${skill.level}%;"></div>
+                    <div class1="skill-bar" style="width: ${skill.level}%;"></div>
                 </div>
             </div>
         `;
@@ -521,304 +521,319 @@ class Terminal {
 }
 
 // --- Three.js Scene Setup ---
+// Temporarily commented out or made conditional to ensure basic terminal works first.
+// We will re-introduce this if basic terminal functionality is stable.
 function setupThreeScene(canvas, terminal) {
-    console.log("Setting up Three.js scene...");
+    console.log("Attempting to set up Three.js scene...");
+    // Check if Three.js is loaded
     if (typeof THREE === 'undefined') {
         console.error("Three.js is not loaded. Please ensure it's included via CDN in index.html.");
+        // Display an error message to the user on the page if Three.js is missing
+        // This might still fail if DOMContentLoaded hasn't run, but it's a reasonable fallback.
         const errorDiv = document.createElement('div');
         errorDiv.style.color = 'red';
         errorDiv.style.textAlign = 'center';
         errorDiv.style.marginTop = '50px';
         errorDiv.textContent = 'Error: Three.js library not found. Please check your internet connection or CDN link.';
-        document.getElementById('crt-container').appendChild(errorDiv);
+        document.getElementById('crt-container')?.appendChild(errorDiv); // Use optional chaining
         return null;
     }
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setClearColor(0x000000, 0); // Transparent background
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = false;
-    controls.maxPolarAngle = Math.PI / 1.5;
-
-    camera.position.z = 5;
-
-    // Post-processing
-    let composer, bloomPass, glitchPass;
     try {
-        console.log("Initializing EffectComposer...");
-        composer = new THREE.EffectComposer(renderer);
-        const renderPass = new THREE.RenderPass(scene, camera);
-        composer.addPass(renderPass);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
 
-        bloomPass = new THREE.BloomPass(1, 25, 4, 256);
-        bloomPass.threshold = 0.1;
-        bloomPass.strength = 1.5;
-        bloomPass.radius = 0.5;
-        composer.addPass(bloomPass);
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000, 0); // Transparent background
 
-        glitchPass = new THREE.GlitchPass();
-        glitchPass.goWild = false;
-        composer.addPass(glitchPass);
-        console.log("Post-processing initialized successfully.");
-    } catch (e) {
-        console.error("Failed to initialize post-processing effects:", e);
-        composer = null; // Ensure composer is null if it fails
-    }
-    const postProcessing = { composer, bloom: bloomPass, glitch: glitchPass };
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.maxPolarAngle = Math.PI / 1.5;
 
-    // Particle Field
-    console.log("Creating particle field...");
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particlesMaterial = new THREE.PointsMaterial({
-        color: 0x00ff00, // Green
-        size: 0.05,
-        transparent: true,
-        opacity: 0.7,
-        blending: THREE.AdditiveBlending,
-    });
+        camera.position.z = 5;
 
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 20;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-    }
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particles);
+        // Post-processing (conditionally initialize)
+        let composer, bloomPass, glitchPass;
+        try {
+            console.log("Initializing EffectComposer...");
+            composer = new THREE.EffectComposer(renderer);
+            const renderPass = new THREE.RenderPass(scene, camera);
+            composer.addPass(renderPass);
 
-    const particleSystem = {
-        mesh: particles, geometry: particlesGeometry, material: particlesMaterial,
-        positions: positions, velocities: new Float32Array(PARTICLE_COUNT * 3).fill(0)
-    };
-    console.log("Particle field created.");
+            bloomPass = new THREE.BloomPass(1, 25, 4, 256);
+            bloomPass.threshold = 0.1;
+            bloomPass.strength = 1.5;
+            bloomPass.radius = 0.5;
+            composer.addPass(bloomPass);
 
-    // Matrix Rain
-    const matrixChars = [];
-    const matrixContainer = document.createElement('div');
-    matrixContainer.id = 'matrix-rain-container';
-    matrixContainer.style.position = 'absolute'; matrixContainer.style.top = '0'; matrixContainer.style.left = '0';
-    matrixContainer.style.width = '100%'; matrixContainer.style.height = '100%';
-    matrixContainer.style.pointerEvents = 'none'; matrixContainer.style.overflow = 'hidden';
-    matrixContainer.style.zIndex = '5';
-    document.getElementById('crt-container').appendChild(matrixContainer);
-
-    function activateMatrixRain() {
-        console.log("Activating Matrix Rain");
-        matrixContainer.style.display = 'block';
-        for (let i = 0; i < MATRIX_MAX_CHARS; i++) {
-            const charElement = document.createElement('span');
-            charElement.className = 'matrix-code';
-            charElement.style.position = 'absolute'; charElement.style.opacity = '0';
-            charElement.innerText = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
-            matrixContainer.appendChild(charElement);
-            matrixChars.push({ element: charElement, x: 0, y: 0, speed: MATRIX_SPEED + Math.random() * 0.1 });
+            glitchPass = new THREE.GlitchPass();
+            glitchPass.goWild = false;
+            composer.addPass(glitchPass);
+            console.log("Post-processing initialized successfully.");
+        } catch (e) {
+            console.error("Failed to initialize post-processing effects:", e);
+            composer = null; // Ensure composer is null if it fails
         }
-        matrixRainAnimation();
-    }
+        const postProcessing = { composer, bloom: bloomPass, glitch: glitchPass };
 
-    function deactivateMatrixRain() {
-        console.log("Deactivating Matrix Rain");
-        matrixContainer.style.display = 'none';
-        matrixChars.forEach(charData => {
-            if (charData.element.parentNode) charData.element.parentNode.removeChild(charData.element);
+        // Particle Field
+        console.log("Creating particle field...");
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: 0x00ff00, // Green
+            size: 0.05,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending,
         });
-        matrixChars.length = 0;
-    }
 
-    function matrixRainAnimation() {
-        const containerWidth = matrixContainer.offsetWidth;
-        const containerHeight = matrixContainer.offsetHeight;
-
-        matrixChars.forEach(charData => {
-            charData.y += charData.speed;
-            if (charData.y > containerHeight + 20) {
-                charData.y = -20;
-                charData.x = Math.random() * containerWidth;
-                charData.element.innerText = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
-                charData.element.style.color = '#00ff00';
-            }
-            charData.element.style.left = `${charData.x}px`;
-            charData.element.style.top = `${charData.y}px`;
-            charData.element.style.opacity = Math.max(0, 1 - (charData.y / (containerHeight + 20))).toString();
-
-            if (Math.random() < 0.02) charData.element.style.color = '#00ff00';
-            else if (Math.random() < 0.05) charData.element.style.color = '#90ee90';
-        });
-        requestAnimationFrame(matrixRainAnimation);
-    }
-
-    // Dynamic Elements
-    let projectCubes = [];
-    let skillIcons = [];
-    let activeCommandElements = null;
-
-    function createProjectCubes() {
-        console.log("Creating project cubes...");
-        const projectsData = [
-            { title: "Terminal Portfolio", link: "#", description: "This site!" },
-            { title: "Gemini CLI Experiments", link: "#", description: "AI-powered tools." },
-            { title: "3D Portfolio Engine", link: "#", description: "Reusable Three.js template." },
-            { title: "Personal Blog", link: "#", description: "Thoughts and musings." },
-            { title: "Open Source Contrib", link: "#", description: "Giving back to the community." },
-        ];
-
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshPhongMaterial({ color: 0x00ffff, shininess: 100 });
-
-        projectCubes = [];
-        for (let i = 0; i < Math.min(projectsData.length, PROJECT_CUBE_COUNT); i++) {
-            const mesh = new THREE.Mesh(geometry, material.clone());
-            mesh.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 10);
-            mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-            scene.add(mesh);
-            projectCubes.push({ mesh, ...projectsData[i] });
-        }
-        console.log("Project cubes created.");
-    }
-
-    function createSkillIcons() {
-        console.log("Creating skill icons...");
-        const skillData = [
-            { name: "JS" }, { name: "TS" }, { name: "Three.js" }, { name: "React" }, { name: "Tailwind" }
-        ];
-
-        const geometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const material = new THREE.MeshPhongMaterial({ color: 0xffff00, shininess: 100 });
-
-        skillIcons = [];
-        const radius = 4;
-        for (let i = 0; i < Math.min(skillData.length, SKILL_ICON_COUNT); i++) {
-            const mesh = new THREE.Mesh(geometry, material.clone());
-            const angle = (i / SKILL_ICON_COUNT) * Math.PI * 2;
-            mesh.position.set(radius * Math.cos(angle), 1, radius * Math.sin(angle));
-            scene.add(mesh);
-            skillIcons.push({ mesh, ...skillData[i] });
-        }
-        console.log("Skill icons created.");
-    }
-
-    const commandHandlers = {
-        activateCommandElements: (elements) => {
-            console.log("Activating command elements in scene");
-            if (activeCommandElements) {
-                activeCommandElements.forEach(obj => scene.remove(obj.mesh));
-            }
-            activeCommandElements = elements;
-            elements.forEach(obj => scene.add(obj.mesh));
-        },
-        clearCommandElements: () => {
-            console.log("Clearing command elements from scene");
-            if (activeCommandElements) {
-                activeCommandElements.forEach(obj => disposeThreeObject(obj.mesh));
-                activeCommandElements = null;
-            }
-        },
-        activateMatrix: activateMatrixRain,
-        deactivateMatrix: deactivateMatrixRain
-    };
-
-    const animate = () => {
-        requestAnimationFrame(animate);
-
-        controls.update();
-
-        // Animate particles
-        const positions = particleSystem.positions;
-        const velocities = particleSystem.velocities;
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
         for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const i3 = i * 3;
-            const dx = -positions[i3] * 0.001;
-            const dy = -positions[i3 + 1] * 0.001;
-            const dz = -positions[i3 + 2] * 0.001;
+            positions[i * 3] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
 
-            velocities[i3] += dx + (Math.random() - 0.5) * 0.01;
-            velocities[i3 + 1] += dy + (Math.random() - 0.5) * 0.01;
-            velocities[i3 + 2] += dz + (Math.random() - 0.5) * 0.01;
+        const particleSystem = {
+            mesh: particles, geometry: particlesGeometry, material: particlesMaterial,
+            positions: positions, velocities: new Float32Array(PARTICLE_COUNT * 3).fill(0)
+        };
+        console.log("Particle field created.");
 
-            positions[i3] += velocities[i3];
-            positions[i3 + 1] += velocities[i3 + 1];
-            positions[i3 + 2] += velocities[i3 + 2];
+        // Matrix Rain (Only if matrixContainer is available)
+        let matrixContainer = document.getElementById('matrix-rain-container');
+        if (!matrixContainer) {
+            matrixContainer = document.createElement('div');
+            matrixContainer.id = 'matrix-rain-container';
+            matrixContainer.style.position = 'absolute'; matrixContainer.style.top = '0'; matrixContainer.style.left = '0';
+            matrixContainer.style.width = '100%'; matrixContainer.style.height = '100%';
+            matrixContainer.style.pointerEvents = 'none'; matrixContainer.style.overflow = 'hidden';
+            matrixContainer.style.zIndex = '5';
+            document.getElementById('crt-container')?.appendChild(matrixContainer); // Append if crt-container exists
+        }
 
-            const dist = Math.sqrt(positions[i3]**2 + positions[i3+1]**2 + positions[i3+2]**2);
-            if (dist > 15) {
-                positions[i3] = (Math.random() - 0.5) * 5;
-                positions[i3 + 1] = (Math.random() - 0.5) * 5;
-                positions[i3 + 2] = (Math.random() - 0.5) * 5;
-                velocities[i3] = 0; velocities[i3+1] = 0; velocities[i3+2] = 0;
+        const matrixChars = []; // Ensure matrixChars is accessible within its functions
+
+        function activateMatrixRain() {
+            console.log("Activating Matrix Rain");
+            matrixContainer.style.display = 'block';
+            for (let i = 0; i < MATRIX_MAX_CHARS; i++) {
+                const charElement = document.createElement('span');
+                charElement.className = 'matrix-code';
+                charElement.style.position = 'absolute'; charElement.style.opacity = '0';
+                charElement.innerText = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+                matrixContainer.appendChild(charElement);
+                matrixChars.push({ element: charElement, x: 0, y: 0, speed: MATRIX_SPEED + Math.random() * 0.1 });
             }
+            matrixRainAnimation();
         }
-        particleSystem.geometry.attributes.position.needsUpdate = true;
 
-        // Animate project cubes
-        if (projectCubes) {
-            projectCubes.forEach((cube, index) => {
-                cube.mesh.rotation.x += 0.005 * (index + 1);
-                cube.mesh.rotation.y += 0.003 * (index + 1);
+        function deactivateMatrixRain() {
+            console.log("Deactivating Matrix Rain");
+            matrixContainer.style.display = 'none';
+            matrixChars.forEach(charData => {
+                if (charData.element.parentNode) charData.element.parentNode.removeChild(charData.element);
             });
+            matrixChars.length = 0; // Clear the array
         }
 
-        // Animate skill icons
-        if (skillIcons) {
-            const elapsedTime = performance.now() * 0.001;
-            const orbitRadius = 4;
-            const orbitSpeed = 0.5;
-            skillIcons.forEach((icon, index) => {
-                const angle = orbitSpeed * elapsedTime + (index / SKILL_ICON_COUNT) * Math.PI * 2;
-                icon.mesh.position.x = orbitRadius * Math.cos(angle);
-                icon.mesh.position.z = orbitRadius * Math.sin(angle);
-                icon.mesh.rotation.y += 0.01;
+        function matrixRainAnimation() {
+            const containerWidth = matrixContainer.offsetWidth;
+            const containerHeight = matrixContainer.offsetHeight;
+
+            matrixChars.forEach(charData => {
+                charData.y += charData.speed;
+                if (charData.y > containerHeight + 20) { // Reset if off screen
+                    charData.y = -20;
+                    charData.x = Math.random() * containerWidth;
+                    charData.element.innerText = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+                    charData.element.style.color = '#00ff00';
+                }
+                charData.element.style.left = `${charData.x}px`;
+                charData.element.style.top = `${charData.y}px`;
+                charData.element.style.opacity = Math.max(0, 1 - (charData.y / (containerHeight + 20))).toString();
+
+                if (Math.random() < 0.02) charData.element.style.color = '#00ff00';
+                else if (Math.random() < 0.05) charData.element.style.color = '#90ee90';
             });
+            requestAnimationFrame(matrixRainAnimation);
         }
 
-        if (composer) { // Only render if composer was successfully initialized
-            composer.render();
-        } else {
-            renderer.render(scene, camera); // Fallback render without post-processing
+        // Dynamic Elements (for commands like projects, skills)
+        let projectCubes = [];
+        let skillIcons = [];
+        let activeCommandElements = null;
+
+        function createProjectCubes() {
+            console.log("Creating project cubes...");
+            const projectsData = [
+                { title: "Terminal Portfolio", link: "#", description: "This site!" },
+                { title: "Gemini CLI Experiments", link: "#", description: "AI-powered tools." },
+                { title: "3D Portfolio Engine", link: "#", description: "Reusable Three.js template." },
+                { title: "Personal Blog", link: "#", description: "Thoughts and musings." },
+                { title: "Open Source Contrib", link: "#", description: "Giving back to the community." },
+            ];
+
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshPhongMaterial({ color: 0x00ffff, shininess: 100 });
+
+            projectCubes = []; // Clear previous cubes if any
+            for (let i = 0; i < Math.min(projectsData.length, PROJECT_CUBE_COUNT); i++) {
+                const mesh = new THREE.Mesh(geometry, material.clone());
+                mesh.position.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 10);
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                scene.add(mesh);
+                projectCubes.push({ mesh, ...projectsData[i] });
+            }
+            console.log("Project cubes created.");
         }
-    };
 
-    const resizeCanvas = () => {
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-        console.log(`Resizing canvas to: ${width}x${height}`);
-        renderer.setSize(width, height);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        if (composer) {
-            composer.setSize(width, height);
+        function createSkillIcons() {
+            console.log("Creating skill icons...");
+            const skillData = [
+                { name: "JS" }, { name: "TS" }, { name: "Three.js" }, { name: "React" }, { name: "Tailwind" }
+            ];
+
+            const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+            const material = new THREE.MeshPhongMaterial({ color: 0xffff00, shininess: 100 });
+
+            skillIcons = []; // Clear previous icons
+            const radius = 4;
+            for (let i = 0; i < Math.min(skillData.length, SKILL_ICON_COUNT); i++) {
+                const mesh = new THREE.Mesh(geometry, material.clone());
+                const angle = (i / SKILL_ICON_COUNT) * Math.PI * 2;
+                mesh.position.set(radius * Math.cos(angle), 1, radius * Math.sin(angle));
+                scene.add(mesh);
+                skillIcons.push({ mesh, ...skillData[i] });
+            }
+            console.log("Skill icons created.");
         }
-    };
 
-    // Public API for Terminal
-    const threeSceneApi = {
-        scene, camera, renderer, controls, composer, postProcessing,
-        particleSystem, projectCubes, skillIcons, commandHandlers,
-        createProjectCubes, createSkillIcons, activateMatrixRain, deactivateMatrixRain,
-        resizeCanvas,
-        dispose: () => {
-            console.log("Disposing Three.js objects...");
-            disposeThreeObject(scene); renderer.dispose();
-            if (composer) composer.dispose();
-            if (bloomPass) bloomPass.dispose();
-            if (glitchPass) glitchPass.dispose();
-            if (matrixContainer.parentNode) matrixContainer.parentNode.removeChild(matrixContainer);
-            console.log("Three.js disposed.");
-        }
-    };
+        const commandHandlers = {
+            activateCommandElements: (elements) => {
+                console.log("Activating command elements in scene");
+                if (activeCommandElements) {
+                    activeCommandElements.forEach(obj => scene.remove(obj.mesh));
+                }
+                activeCommandElements = elements;
+                elements.forEach(obj => scene.add(obj.mesh));
+            },
+            clearCommandElements: () => {
+                console.log("Clearing command elements from scene");
+                if (activeCommandElements) {
+                    activeCommandElements.forEach(obj => disposeThreeObject(obj.mesh));
+                    activeCommandElements = null;
+                }
+            },
+            activateMatrix: activateMatrixRain,
+            deactivateMatrix: deactivateMatrixRain
+        };
 
-    resizeCanvas();
-    animate();
+        const animate = () => {
+            requestAnimationFrame(animate);
 
-    return threeSceneApi;
+            controls.update();
+
+            // Animate particles
+            const positions = particleSystem.positions;
+            const velocities = particleSystem.velocities;
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const i3 = i * 3;
+                const dx = -positions[i3] * 0.001;
+                const dy = -positions[i3 + 1] * 0.001;
+                const dz = -positions[i3 + 2] * 0.001;
+
+                velocities[i3] += dx + (Math.random() - 0.5) * 0.01;
+                velocities[i3 + 1] += dy + (Math.random() - 0.5) * 0.01;
+                velocities[i3 + 2] += dz + (Math.random() - 0.5) * 0.01;
+
+                positions[i3] += velocities[i3];
+                positions[i3 + 1] += velocities[i3 + 1];
+                positions[i3 + 2] += velocities[i3 + 2];
+
+                const dist = Math.sqrt(positions[i3]**2 + positions[i3+1]**2 + positions[i3+2]**2);
+                if (dist > 15) { // Keep particles within a certain radius
+                    positions[i3] = (Math.random() - 0.5) * 5;
+                    positions[i3 + 1] = (Math.random() - 0.5) * 5;
+                    positions[i3 + 2] = (Math.random() - 0.5) * 5;
+                    velocities[i3] = 0; velocities[i3+1] = 0; velocities[i3+2] = 0;
+                }
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+
+            // Animate project cubes
+            if (projectCubes) {
+                projectCubes.forEach((cube, index) => {
+                    cube.mesh.rotation.x += 0.005 * (index + 1);
+                    cube.mesh.rotation.y += 0.003 * (index + 1);
+                });
+            }
+
+            // Animate skill icons
+            if (skillIcons) {
+                const elapsedTime = performance.now() * 0.001;
+                const orbitRadius = 4;
+                const orbitSpeed = 0.5;
+                skillIcons.forEach((icon, index) => {
+                    const angle = orbitSpeed * elapsedTime + (index / SKILL_ICON_COUNT) * Math.PI * 2;
+                    icon.mesh.position.x = orbitRadius * Math.cos(angle);
+                    icon.mesh.position.z = orbitRadius * Math.sin(angle);
+                    icon.mesh.rotation.y += 0.01;
+                });
+            }
+
+            if (composer) { // Only render if composer was successfully initialized
+                composer.render();
+            } else {
+                renderer.render(scene, camera); // Fallback render without post-processing
+            }
+        };
+
+        const resizeCanvas = () => {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            console.log(`Resizing canvas to: ${width}x${height}`);
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            if (composer) {
+                composer.setSize(width, height);
+            }
+        };
+
+        // Public API for Terminal
+        const threeSceneApi = {
+            scene, camera, renderer, controls, composer, postProcessing,
+            particleSystem, projectCubes, skillIcons, commandHandlers,
+            createProjectCubes, createSkillIcons, activateMatrixRain, deactivateMatrixRain,
+            resizeCanvas,
+            dispose: () => {
+                console.log("Disposing Three.js objects...");
+                disposeThreeObject(scene); renderer.dispose();
+                if (composer) composer.dispose();
+                if (bloomPass) bloomPass.dispose();
+                if (glitchPass) glitchPass.dispose();
+                if (matrixContainer.parentNode) matrixContainer.parentNode.removeChild(matrixContainer);
+                console.log("Three.js disposed.");
+            }
+        };
+
+        resizeCanvas();
+        animate();
+
+        return threeSceneApi;
+    } catch (e) {
+        console.error("Error during Three.js setup:", e);
+        terminal.log("Error initializing 3D effects. Continuing with text-only mode.", "output-error");
+        return null; // Return null if Three.js setup fails
+    }
 }
 
 // --- Command Implementation ---
@@ -958,15 +973,14 @@ window.addEventListener('load', async () => {
     const terminalOutput = document.getElementById('terminal-output');
     const terminalInput = document.getElementById('terminal-input');
     const promptSymbol = document.getElementById('prompt-symbol');
-    const canvas = document.getElementById('three-canvas');
+    const canvas = document.getElementById('three-canvas'); // Still get canvas, even if Three.js setup might fail
 
     let terminal;
 
     // Check for essential DOM elements first
-    if (!terminalOutput || !terminalInput || !promptSymbol || !canvas) {
-        console.error("Essential DOM elements not found. Please check index.html.");
-        // Display a more direct error message if elements are missing
-        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements (terminal output, input, canvas) are missing. Please check index.html for correctness.</div>';
+    if (!terminalOutput || !terminalInput || !promptSymbol) { // Canvas might be null if Three.js fails, but terminal needs others.
+        console.error("Essential DOM elements (terminal output, input, prompt) not found. Please check index.html.");
+        document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">Error: Essential page elements (terminal output, input, prompt) are missing. Please check index.html for correctness.</div>';
         return; // Stop execution if essential elements are missing
     }
 
@@ -981,16 +995,21 @@ window.addEventListener('load', async () => {
         registerCommands(terminal);
         console.log("Commands registered.");
 
-        console.log("Setting up Three.js scene...");
-        // Attempt Three.js setup, but continue if it fails
-        const threeSceneApi = setupThreeScene(canvas, terminal); 
-        if (threeSceneApi) {
-            terminal.setThreeScene(threeSceneApi);
-            console.log("Three.js scene setup successful.");
+        // Only attempt Three.js setup if canvas exists and is usable
+        if (canvas) {
+            console.log("Setting up Three.js scene...");
+            const threeSceneApi = setupThreeScene(canvas, terminal); 
+            if (threeSceneApi) {
+                terminal.setThreeScene(threeSceneApi);
+                console.log("Three.js scene setup successful.");
+            } else {
+                console.warn("Three.js scene setup failed. 3D effects might be disabled.");
+                // Terminal.log is available here, so we can inform the user.
+                terminal.log("Warning: 3D effects could not be initialized. Continuing with text-only mode.", "output-info");
+            }
         } else {
-            console.warn("Three.js scene setup failed. 3D effects might be disabled.");
-            // Optionally display a message to the user that 3D effects are disabled.
-            terminal.log("Warning: 3D effects could not be initialized.", "output-info");
+            console.warn("Canvas element not found for Three.js. 3D effects will be disabled.");
+            terminal.log("Warning: 3D canvas not found. 3D effects are disabled.", "output-info");
         }
 
         document.body.classList.add('loaded');
